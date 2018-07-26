@@ -11,7 +11,7 @@ import handleTask from '../core/daemon/handle.task'
 import apiHook from '../core/daemon/api.hook'
 
 export default {
-  name: 'ddvMultiWindowDaemon',
+  name: 'ddv-multi-window-daemon',
   mixins: [
     base,
     api,

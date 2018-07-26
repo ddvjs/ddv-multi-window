@@ -6,6 +6,7 @@ import Task from './components/task.vue'
 import Daemon from './components/daemon'
 import Button from './components/button'
 import Master from './components/master'
+import DmwButton from './components/dmw-button'
 import MasterTask from './components/master-task'
 import MasterView from './components/master-view'
 import { isDef } from './util/is-def'
@@ -194,6 +195,7 @@ export class DdvMultiWindowGlobal {
     Vue.component(Daemon.name, Daemon)
     Vue.component(Button.name, Button)
     Vue.component(Master.name, Master)
+    Vue.component(DmwButton.name, DmwButton)
     Vue.component(MasterTask.name, MasterTask)
     Vue.component(MasterView.name, MasterView)
   }

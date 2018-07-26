@@ -86,7 +86,7 @@ function open (input) {
   if (typeof input === 'string') {
     input = { src: input };
   }
-  input.taskId = this.taskId;
+  input.taskId = input.taskId || this.taskId;
   return this.app.open(input)
 }
 function constructor (app, taskId) {
@@ -2912,7 +2912,7 @@ function registerHook (list, fn) {
 /*  */
 
 var Daemon = {
-  name: 'ddvMultiWindowDaemon',
+  name: 'ddv-multi-window-daemon',
   mixins: [
     base,
     api,
@@ -2927,8 +2927,8 @@ var Daemon = {
   render: render
 }
 
-var Button = {
-  name: 'ddvMultiWindowButton',
+var button = {
+  name: 'ddv-multi-window-button',
   props: {
     to: {
       type: [String, Object],
@@ -2944,7 +2944,7 @@ var Button = {
     },
     taskId: {
       type: [Number, String],
-      default: 'daemon'
+      default: ''
     },
     event: {
       type: [String, Array],
@@ -3189,6 +3189,19 @@ var master = {
   }
 }
 
+var DmwButton = {
+  name: 'dmw-button',
+  functional: true,
+  render: function render (h, ref) {
+    var data = ref.data;
+    var children = ref.children;
+    var props = ref.props;
+
+    data.props = props;
+    return h(button, data, children)
+  }
+}
+
 var MasterTask = {
   name: 'ddv-multi-window-task',
   functional: true,
@@ -3409,8 +3422,9 @@ DdvMultiWindowGlobal.prototype.componentInstall = function componentInstall (Vue
   // 安装组件
   Vue.component(Task.name, Task);
   Vue.component(Daemon.name, Daemon);
-  Vue.component(Button.name, Button);
+  Vue.component(button.name, button);
   Vue.component(master.name, master);
+  Vue.component(DmwButton.name, DmwButton);
   Vue.component(MasterTask.name, MasterTask);
   Vue.component(MasterView.name, MasterView);
 };
@@ -3480,3 +3494,4 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, getParent, Ready, EventMessageWindow };
+//# sourceMappingURL=ddv-multi-window.esm.js.map

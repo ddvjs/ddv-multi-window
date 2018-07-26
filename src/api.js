@@ -69,7 +69,7 @@ function open (input) {
   if (typeof input === 'string') {
     input = { src: input }
   }
-  input.taskId = this.taskId
+  input.taskId = input.taskId || this.taskId
   return this.app.open(input)
 }
 function constructor (app, taskId) {

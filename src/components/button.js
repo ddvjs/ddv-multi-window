@@ -2,7 +2,7 @@ import clone from '../util/clone'
 import cloneRenderOptions from '../util/clone-render-options'
 
 export default {
-  name: 'ddvMultiWindowButton',
+  name: 'ddv-multi-window-button',
   props: {
     to: {
       type: [String, Object],
@@ -18,7 +18,7 @@ export default {
     },
     taskId: {
       type: [Number, String],
-      default: 'daemon'
+      default: ''
     },
     event: {
       type: [String, Array],
