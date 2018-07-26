@@ -9,9 +9,10 @@ import apiAction from '../core/daemon/api.action'
 import handle from '../core/daemon/handle'
 import handleTask from '../core/daemon/handle.task'
 import apiHook from '../core/daemon/api.hook'
+import tabRouter from '../core/daemon/tab.router'
 
 export default {
-  name: 'ddvMultiWindowDaemon',
+  name: 'ddv-multi-window-daemon',
   mixins: [
     base,
     api,
@@ -21,7 +22,8 @@ export default {
     apiAction,
     handle,
     handleTask,
-    apiHook
+    apiHook,
+    tabRouter
   ],
   render
 }

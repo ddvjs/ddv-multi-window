@@ -2,11 +2,14 @@ import clone from '../util/clone'
 import cloneRenderOptions from '../util/clone-render-options'
 
 export default {
-  name: 'ddvMultiWindowButton',
+  name: 'ddv-multi-window-button',
   props: {
     to: {
-      type: [String, Object],
-      required: true
+      type: [String, Object]
+    },
+    type: {
+      type: String,
+      default: 'open'
     },
     tag: {
       type: String,
@@ -18,7 +21,7 @@ export default {
     },
     taskId: {
       type: [Number, String],
-      default: 'daemon'
+      default: ''
     },
     event: {
       type: [String, Array],
@@ -46,7 +49,6 @@ export default {
       // master进程的id
       this.$ddvMultiWindowGlobal.masterInit(this)
         .then(() => {
-          this.$ddvMultiWindow.onDaemonClose = this.onDaemonClose.bind(this)
           // 标记初始化完毕
           this.ddvMultiWindowReady = true
         }, e => {
@@ -62,14 +64,27 @@ export default {
           taskId
         })
         if (this.ddvMultiWindowReady) {
-          this.$ddvMultiWindow.open(options)
+          this.comply(options)
         } else {
           return this.$ddvMultiWindowGlobal.masterInit(this)
             .then(() => {
-              this.$ddvMultiWindow.open(options)
+              this.comply(options)
             })
         }
       }
+    },
+    comply (options) {
+      this.$ddvMultiWindow.tryRun(() => {
+        switch (this.type) {
+          case 'open':
+            return this.$ddvMultiWindow.open(options)
+          case 'close':
+          case 'remove':
+            return this.$ddvMultiWindow.remove(this.$router.process.id)
+          default:
+            return Promise.reject(new Error('this operation is not supported yet'))
+        }
+      })
     }
   },
   created () {
