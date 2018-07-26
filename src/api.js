@@ -66,11 +66,7 @@ vueAppMethods.forEach(method => {
   }
 })
 function open (input) {
-  if (typeof input === 'string') {
-    input = { src: input }
-  }
-  input.taskId = input.taskId || this.taskId
-  return this.app.open(input)
+  return this.app.open(input, this.taskId)
 }
 function constructor (app, taskId) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装

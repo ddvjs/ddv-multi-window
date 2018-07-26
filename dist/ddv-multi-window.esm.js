@@ -83,11 +83,7 @@ vueAppMethods.forEach(function (method) {
   }
 });
 function open (input) {
-  if (typeof input === 'string') {
-    input = { src: input };
-  }
-  input.taskId = input.taskId || this.taskId;
-  return this.app.open(input)
+  return this.app.open(input, this.taskId)
 }
 function constructor (app, taskId) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
@@ -2077,7 +2073,7 @@ var apiUtil = {
         })
         .then(function (components) {
           item.component = Object.create(components[0]);
-          item.component.router = this$1.loadComponentRouter();
+          item.component.router = this$1.loadComponentRouter(item);
         })
         .catch(function (e) {
           item.error = e;
@@ -2370,9 +2366,37 @@ var apiTab = {
   }
 }
 
+function openDefaultData () {
+  return {
+    // 路径
+    src: '/',
+    // 标题
+    title: 'New window',
+    // 是否可以关闭
+    closable: true,
+    // 是否可以刷新
+    refreshable: false,
+    // 是否正在移除中
+    removeing: false,
+    // 窗口
+    contentWindow: null,
+    // 视图的 可拖动的dom，是一个属性不变的jquery dom - 注意，不能去改变属性，避免vue重新渲染
+    $content: null,
+    // iframe 的 jquery
+    $iframe: null,
+    // 视图的 父层 jquery dom 不会改变，第一次的父层 - 注意，不能去改变属性，避免vue重新渲染
+    $parent: null,
+    // 注入到那个具体窗口的容器
+    $mainWrap: {},
+    // 组件
+    component: null
+  }
+}
+
 var apiAction = {
   methods: {
-    open: function open (input) {
+    open: function open (input, taskId) {
+      var d = openDefaultData();
       // 构建配置选项
       var options = Object.create(null);
       // 如果传入参数是一个字符串
@@ -2386,18 +2410,43 @@ var apiAction = {
         };
       } else if (typeof input === 'object') {
         // 遍历属性
-        for (var key in input) {
+        Object.keys(d).forEach(function (key) {
           if (Object.hasOwnProperty.call(input, key)) {
-            // 复制属性
+          // 复制属性
             options[key] = input[key];
           }
-        }
-        options.options = input;
+          options.options = input;
+        });
       }
-      if (!options.mode) {
+      if (options.src) {
+        // 找到对应的组件
         var matchedComponents = this.$router.getMatchedComponents(options.src);
-        options.mode = matchedComponents.length ? 'component' : 'iframe';
+        // 没有设置加载模式
+        if (!options.mode) {
+          // 设置加载模式
+          options.mode = matchedComponents.length ? 'component' : 'iframe';
+        }
+        // 找到组件
+        if (matchedComponents.length) {
+          console.log(8888, this.$router);
+          // 获取目标路由信息
+          var ref = this.$router.resolve(options.src);
+          var route = ref.route;
+          var href = ref.href;
+          options.src = href;
+          options.route = route;
+        }
+      } else if (typeof input === 'object') {
+        console.log(9999, this.$router);
+        // 获取目标路由信息
+        var ref$1 = this.$router.resolve('admin/home');
+        var route$1 = ref$1.route;
+        var href$1 = ref$1.href;
+        options.src = href$1;
+        options.route = route$1;
       }
+
+      input.taskId = input.taskId || taskId;
       // 窗口类型
       options.mode = options.mode || 'iframe';
       // 创建窗口id
@@ -2465,6 +2514,10 @@ var apiAction = {
       if (!this.isHasId(id)) {
         return Promise.reject(new Error('this window is not found'))
       }
+
+      if (process.closable === false) {
+        return Promise.reject(new Error('this window cannot be closed'))
+      }
       process.removeing = true;
 
       this.viewMoveParentByPid(id);
@@ -2487,6 +2540,10 @@ var apiAction = {
 
       if (!this.isHasId(id)) {
         return Promise.reject(new Error('this window is not found'))
+      }
+
+      if (process.refreshable === true) {
+        return Promise.reject(new Error('this window does not support refresh'))
       }
 
       if (process.mode === 'component') {
@@ -2891,35 +2948,37 @@ function registerHook (list, fn) {
 
 var tabRouter = {
   methods: {
-    loadComponentRouter: function loadComponentRouter () {
-      console.log(8888, this);
-      var router = Object.create(this.$router);
+    loadComponentRouter: function loadComponentRouter (process) {
+      var router = Object.create(null);
+
       Object.assign(router, tabRouter$1, {
-        $parentRouter: this.$router
+        $parentRouter: this.$router,
+        process: process,
+        options: this.$router.options
       });
       return router
     }
   }
 }
 var tabRouter$1 = {
-  init: function init (vm, a, b) {
-    this.$ddvMultiWindow = vm.$ddvMultiWindow;
-    console.log('init 3343', vm.$ddvMultiWindow);
-    return
+  resolve: function resolve () {
+    var a = [], len = arguments.length;
+    while ( len-- ) a[ len ] = arguments[ len ];
 
-    // 这个就是ddvTabView 实例
-    this.ddvTabView = vm.$parent;
-    this.history = Object.create(this.history);
-    console.log(this.history);
-    this.history.current = this.resolve(this.ddvTabView.windowSrc).route;
+    return this.$parentRouter.resolve.apply(this.$parentRouter, a)
+  },
+  init: function init (vm, a, b) {
+    vm._route = this.process.route;
+    this.$ddvMultiWindow = vm.$ddvMultiWindow;
+    this.history = {};
+    this.history.current = this.process.route;
   },
   push: function push (location, onComplete, onAbort) {
     this.$ddvMultiWindow.open(location);
-    // this.$parentRouter.push()
-    console.log('44-push-4location, onComplete, onAbort', location, onComplete, onAbort);
+    // this.$parentRouter.push('/#44')
   },
   replace: function replace (location, onComplete, onAbort) {
-    console.log('444location, onComplete, onAbort', location, onComplete, onAbort);
+    console.log('location, onComplete, onAbort', location, onComplete, onAbort);
   }
 };
 
@@ -2947,6 +3006,10 @@ var button = {
   props: {
     to: {
       type: [String, Object]
+    },
+    type: {
+      type: String,
+      default: 'open'
     },
     tag: {
       type: String,
@@ -3007,14 +3070,29 @@ var button = {
           taskId: taskId
         });
         if (this.ddvMultiWindowReady) {
-          this.$ddvMultiWindow.open(options);
+          this.comply(options);
         } else {
           return this.$ddvMultiWindowGlobal.masterInit(this)
             .then(function () {
-              this$1.$ddvMultiWindow.open(options);
+              this$1.comply(options);
             })
         }
       }
+    },
+    comply: function comply (options) {
+      var this$1 = this;
+
+      this.$ddvMultiWindow.tryRun(function () {
+        switch (this$1.type) {
+          case 'open':
+            return this$1.$ddvMultiWindow.open(options)
+          case 'close':
+          case 'remove':
+            return this$1.$ddvMultiWindow.remove(this$1.$router.process.id)
+          default:
+            return Promise.reject(new Error('this operation is not supported yet'))
+        }
+      });
     }
   },
   created: function created () {

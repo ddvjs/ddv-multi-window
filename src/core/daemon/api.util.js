@@ -169,7 +169,7 @@ export default {
         })
         .then(components => {
           item.component = Object.create(components[0])
-          item.component.router = this.loadComponentRouter()
+          item.component.router = this.loadComponentRouter(item)
         })
         .catch(e => {
           item.error = e

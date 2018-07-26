@@ -1,10 +1,12 @@
 
 import { unDefDefaultByObj } from '../../util/is-def'
 import removeArray from '../../util/remove-array'
+import openDefaultData from '../../util/open-default-data'
 
 export default {
   methods: {
-    open (input) {
+    open (input, taskId) {
+      const d = openDefaultData()
       // 构建配置选项
       var options = Object.create(null)
       // 如果传入参数是一个字符串
@@ -18,18 +20,39 @@ export default {
         }
       } else if (typeof input === 'object') {
         // 遍历属性
-        for (var key in input) {
+        Object.keys(d).forEach(key => {
           if (Object.hasOwnProperty.call(input, key)) {
-            // 复制属性
+          // 复制属性
             options[key] = input[key]
           }
-        }
-        options.options = input
+          options.options = input
+        })
       }
-      if (!options.mode) {
+      if (options.src) {
+        // 找到对应的组件
         const matchedComponents = this.$router.getMatchedComponents(options.src)
-        options.mode = matchedComponents.length ? 'component' : 'iframe'
+        // 没有设置加载模式
+        if (!options.mode) {
+          // 设置加载模式
+          options.mode = matchedComponents.length ? 'component' : 'iframe'
+        }
+        // 找到组件
+        if (matchedComponents.length) {
+          console.log(8888, this.$router)
+          // 获取目标路由信息
+          const { route, href } = this.$router.resolve(options.src)
+          options.src = href
+          options.route = route
+        }
+      } else if (typeof input === 'object') {
+        console.log(9999, this.$router)
+        // 获取目标路由信息
+        const { route, href } = this.$router.resolve('admin/home')
+        options.src = href
+        options.route = route
       }
+
+      input.taskId = input.taskId || taskId
       // 窗口类型
       options.mode = options.mode || 'iframe'
       // 创建窗口id
@@ -95,6 +118,10 @@ export default {
       if (!this.isHasId(id)) {
         return Promise.reject(new Error('this window is not found'))
       }
+
+      if (process.closable === false) {
+        return Promise.reject(new Error('this window cannot be closed'))
+      }
       process.removeing = true
 
       this.viewMoveParentByPid(id)
@@ -117,6 +144,10 @@ export default {
 
       if (!this.isHasId(id)) {
         return Promise.reject(new Error('this window is not found'))
+      }
+
+      if (process.refreshable === true) {
+        return Promise.reject(new Error('this window does not support refresh'))
       }
 
       if (process.mode === 'component') {
