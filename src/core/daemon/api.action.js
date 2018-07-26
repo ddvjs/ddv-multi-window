@@ -1,0 +1,136 @@
+
+import { unDefDefaultByObj } from '../../util/is-def'
+import removeArray from '../../util/remove-array'
+
+export default {
+  methods: {
+    open (input) {
+      // 构建配置选项
+      var options = Object.create(null)
+      // 如果传入参数是一个字符串
+      if (typeof input === 'string') {
+        // 路径
+        options.src = input
+        // 传入的
+        options.options = {
+          // 打开的窗口的路径
+          src: input
+        }
+      } else if (typeof input === 'object') {
+        // 遍历属性
+        for (var key in input) {
+          if (Object.hasOwnProperty.call(input, key)) {
+            // 复制属性
+            options[key] = input[key]
+          }
+        }
+        options.options = input
+      }
+      if (!options.mode) {
+        const matchedComponents = this.$router.getMatchedComponents(options.src)
+        options.mode = matchedComponents.length ? 'component' : 'iframe'
+      }
+      // 窗口类型
+      options.mode = options.mode || 'iframe'
+      // 创建窗口id
+      if (!options.id) {
+        options.id = this.createPid({
+          mode: options.mode
+        })
+      }
+      // 判断是否在任务栏上显示，如果找不到排除就是需要显示
+      options.isHasTask = this.modeNotTasks.indexOf(options.mode) === -1
+      // 是否有浏览器的全局窗口对象
+      options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow
+      // 把值为undefined使用后面的对象的默认值
+      unDefDefaultByObj(options, {
+        // 路径
+        src: '/',
+        // 标题
+        title: 'New window',
+        // 是否可以关闭
+        closable: true,
+        // 是否可以刷新
+        refreshable: false,
+        // 是否正在移除中
+        removeing: false,
+        // 窗口
+        contentWindow: null,
+        // 视图的 可拖动的dom，是一个属性不变的jquery dom - 注意，不能去改变属性，避免vue重新渲染
+        $content: null,
+        // iframe 的 jquery
+        $iframe: null,
+        // 视图的 父层 jquery dom 不会改变，第一次的父层 - 注意，不能去改变属性，避免vue重新渲染
+        $parent: null,
+        // 注入到那个具体窗口的容器
+        $mainWrap: {},
+        // 组件
+        component: null
+      })
+      // 标题
+      options.title = options.title || `新窗口[id:${options.id}]`
+      // 判断一下 - 如果打开的窗口类型需要任务栏的，并且任务栏中找不到任务栏id
+      if (options.isHasTask && !(this.process[options.taskId] && this.process[options.taskId].isTask)) {
+        // 使用守护窗口任务栏
+        options.taskId = 'daemon'
+      }
+      // 需要任务栏
+      if (options.isHasTask) {
+        // 是否有这个任务 - 没有这个任务，注册任务
+        this.regTask(options.taskId)
+        // 添加任务栏的任务
+        this.addTask({
+          taskId: options.taskId,
+          id: options.id
+        })
+      }
+      // 修改窗口数据
+      this.processPut(options)
+      // 判断是否需要切换到这个tab标签
+      return this.tabToWindow(options.id)
+    },
+    remove (id) {
+      const process = this.process[id]
+
+      if (!this.isHasId(id)) {
+        return Promise.reject(new Error('this window is not found'))
+      }
+      process.removeing = true
+
+      this.viewMoveParentByPid(id)
+      this.taskIds.forEach(taskId => {
+        const task = this.process[taskId]
+        if (task) {
+          // 移除任务栏
+          removeArray(task.pids, item => item === id)
+          // 移除任务栏历史
+          removeArray(task.history, item => item === id)
+        }
+      })
+      // 删除内容
+      this.$delete(this.process, id)
+      // 切换到任务栏的上一个
+      return this.tabToLastWindowByTaskId(process.taskId || 'daemon')
+    },
+    refresh (id) {
+      const process = this.process[id]
+
+      if (!this.isHasId(id)) {
+        return Promise.reject(new Error('this window is not found'))
+      }
+
+      if (process.mode === 'component') {
+        if (process.component) {
+          process.component.reload()
+        }
+      } else if (process.mode === 'iframe') {
+        return this.getWindowByPid(id)
+          .then(({ contentWindow }) => {
+            contentWindow.location.reload(true)
+          })
+      } else {
+        return Promise.reject(new Error('window does not support refresh'))
+      }
+    }
+  }
+}
