@@ -29,13 +29,13 @@
         >
           <div class="tabTask-menu__item">{{process[id].title}}</div>
           <div v-if="process[id].closable!==false" class="tabTask-menu__close" @click="handleTask($event, 'remove', id)">
-            <i class="dmw-icon icon-close"></i>
+            <i class="dmw-icon icon-close f14"></i>
           </div>
           <div v-if="process[id].refreshable!==false" class="fr tabTask-menu__refresh" @click="handleTask($event, 'refresh', id)">
-            <i class="dmw-icon icon-refresh"></i>
+            <i class="dmw-icon icon-refresh f14"></i>
           </div>
           <div class="fr tabTask-menu__refresh" @click.stop="handleTask($event, 'openMasterWindow', id)">
-            <i class="dmw-icon icon-new-window"></i>
+            <i class="dmw-icon icon-new-window f14"></i>
           </div>
         </li>
         <li
@@ -43,7 +43,7 @@
           ref="menuArrow"
           @mouseenter="isShowDropdown = true"
           @mouseleave="isShowDropdown = false">
-          <i class="dmw-icon icon-down-arrow tabTask-menu__pull"></i>
+          <i class="dmw-icon icon-down-arrow tabTask-menu__pull f14"></i>
           <transition name="fade">
             <ul class="menu-dropdown" v-show="isShowDropdown">
               <div class="menu-dropdown__arrow"></div>
