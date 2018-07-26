@@ -5,8 +5,7 @@ export default {
   name: 'ddv-multi-window-button',
   props: {
     to: {
-      type: [String, Object],
-      required: true
+      type: [String, Object]
     },
     tag: {
       type: String,
@@ -46,7 +45,6 @@ export default {
       // master进程的id
       this.$ddvMultiWindowGlobal.masterInit(this)
         .then(() => {
-          this.$ddvMultiWindow.onDaemonClose = this.onDaemonClose.bind(this)
           // 标记初始化完毕
           this.ddvMultiWindowReady = true
         }, e => {

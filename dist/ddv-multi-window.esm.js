@@ -2082,27 +2082,7 @@ var apiUtil = {
         .catch(function (e) {
           item.error = e;
         })
-    },
-
-    loadComponentRouter: function loadComponentRouter () {
-      var router = Object.create(this.$router);
-      /* Object.assign(router, tabRouter, {
-        $parentRouter: this.$router
-      })*/
-      return router
     }
-  },
-  components: {
-  },
-  computed: {
-  },
-  watch: {
-  },
-  beforeCreate: function beforeCreate () {
-  },
-  created: function created () {
-  },
-  mounted: function mounted () {
   }
 }
 
@@ -2909,6 +2889,40 @@ function registerHook (list, fn) {
   }
 }
 
+var tabRouter = {
+  methods: {
+    loadComponentRouter: function loadComponentRouter () {
+      console.log(8888, this);
+      var router = Object.create(this.$router);
+      Object.assign(router, tabRouter$1, {
+        $parentRouter: this.$router
+      });
+      return router
+    }
+  }
+}
+var tabRouter$1 = {
+  init: function init (vm, a, b) {
+    this.$ddvMultiWindow = vm.$ddvMultiWindow;
+    console.log('init 3343', vm.$ddvMultiWindow);
+    return
+
+    // 这个就是ddvTabView 实例
+    this.ddvTabView = vm.$parent;
+    this.history = Object.create(this.history);
+    console.log(this.history);
+    this.history.current = this.resolve(this.ddvTabView.windowSrc).route;
+  },
+  push: function push (location, onComplete, onAbort) {
+    this.$ddvMultiWindow.open(location);
+    // this.$parentRouter.push()
+    console.log('44-push-4location, onComplete, onAbort', location, onComplete, onAbort);
+  },
+  replace: function replace (location, onComplete, onAbort) {
+    console.log('444location, onComplete, onAbort', location, onComplete, onAbort);
+  }
+};
+
 /*  */
 
 var Daemon = {
@@ -2922,7 +2936,8 @@ var Daemon = {
     apiAction,
     handle,
     handleTask,
-    apiHook
+    apiHook,
+    tabRouter
   ],
   render: render
 }
@@ -2931,8 +2946,7 @@ var button = {
   name: 'ddv-multi-window-button',
   props: {
     to: {
-      type: [String, Object],
-      required: true
+      type: [String, Object]
     },
     tag: {
       type: String,
@@ -2976,7 +2990,6 @@ var button = {
       // master进程的id
       this.$ddvMultiWindowGlobal.masterInit(this)
         .then(function () {
-          this$1.$ddvMultiWindow.onDaemonClose = this$1.onDaemonClose.bind(this$1);
           // 标记初始化完毕
           this$1.ddvMultiWindowReady = true;
         }, function (e) {
