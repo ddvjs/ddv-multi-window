@@ -1476,9 +1476,9 @@ function taskChildren (h) {
 
   // 所有任务栏的任务集合
   return this.taskIds.map(function (pid) {
-    var task = this$1.process[pid];
+    var process = this$1.process[pid];
     // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
+    if (!process || !process.isTask) {
       // 既然没有视图，不需要渲染
       return
     }
@@ -1499,7 +1499,7 @@ function taskChildren (h) {
           'process-id': pid,
           'ddv-multi-window-type': 'taskBox'
         }
-      }), taskChildrenRender.call(this$1, h, task))
+      }), taskChildrenRender.call(this$1, h, process))
     ])
   })
 }
@@ -1508,9 +1508,9 @@ function mainChildren (h) {
 
   // 窗口集合
   return this.taskIds.map(function (taskId) {
-    var task = this$1.process[taskId];
+    var process = this$1.process[taskId];
     // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
+    if (!process || !process.isTask) {
       // 既然没有视图，不需要渲染
       return
     }
@@ -1542,7 +1542,7 @@ function mainChildren (h) {
         directives: [{
           name: 'show',
           rawName: 'show',
-          value: task && pid === task.activeId
+          value: process && pid === process.activeId
         }]
       })); }))
     ])
@@ -1572,15 +1572,15 @@ function viewChildren (h) {
   var this$1 = this;
 
   return this.viewIds.map(function (pid) {
-    var pitem = this$1.process[pid];
+    var process = this$1.process[pid];
     // 判断该进程id是否是 一个有视图的进程
-    if (!pitem || !pitem.isHasView) {
+    if (!process || !process.isHasView) {
       // 既然没有视图，不需要渲染
       return
     }
     // 该窗口[视图]的子元素
     var children = [];
-    if (!pitem.init) {
+    if (!process.init) {
       children.push(h(LoadComponent, cloneRenderOptions(this$1.renderOptions.viewLoad, {
         key: 'load',
         attrs: {
@@ -1588,7 +1588,7 @@ function viewChildren (h) {
           'ddv-multi-window-type': 'loadBox'
         }
       })));
-    } else if (pitem.error) {
+    } else if (process.error) {
       children.push(h(ErrorComponent, cloneRenderOptions(this$1.renderOptions.viewError, {
         key: 'error',
         attrs: {
@@ -1599,26 +1599,26 @@ function viewChildren (h) {
           error: this$1.error
         }
       })));
-    } else if (pitem.mode === 'component') {
-      if (pitem.component) {
+    } else if (process.mode === 'component') {
+      if (process.component) {
       // 视图模式 为 vue 组件视图
-        children.push(h(pitem.component, cloneRenderOptions(this$1.renderOptions.viewComponent, {
+        children.push(h(process.component, cloneRenderOptions(this$1.renderOptions.viewComponent, {
           props: {
           }
         })));
       } else {
-        pitem.init = false;
+        process.init = false;
         this$1.loadComponent(pid)
           .then(function () {
-            pitem.init = true;
+            process.init = true;
           })
           .catch(function (error) {
-            pitem.error = error;
+            process.error = error;
           });
       }
       // 插入一个 iframe 的渲染
       // children.push(h('iframe', data))
-    } else if (pitem.mode === 'iframe') {
+    } else if (process.mode === 'iframe') {
       // 插入一个 iframe 的渲染
       children.push(h('iframe', cloneRenderOptions(this$1.renderOptions.viewIframe, {
         // 修改key
@@ -1631,7 +1631,7 @@ function viewChildren (h) {
         },
         attrs: {
           // 窗口的地址
-          src: pitem.src,
+          src: process.src,
           // 窗口的id
           'process-id': pid,
           // 类型
@@ -1788,19 +1788,19 @@ var api = {
       } else {
         tryNum = (tryNum || 0) + 1;
       }
-      var item, taskIdLast;
-      if (!(id && (item = this.process[id]))) {
+      var process, taskIdLast;
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing) {
+      if (process.removeing) {
         return Promise.resolve()
       }
-      if (!(item.$mainWrap && item.$mainWrap[taskId])) {
+      if (!(process.$mainWrap && process.$mainWrap[taskId])) {
         return sleep(350).then(function () { return this$1.windowAppendChild({ id: id, taskId: taskId, autoToTab: autoToTab }, tryNum); })
       }
-      item.$mainWrap[taskId].append(item.$content);
-      taskIdLast = item.taskId;
-      item.taskId = taskId;
+      process.$mainWrap[taskId].append(process.$content);
+      taskIdLast = process.taskId;
+      process.taskId = taskId;
 
       if (autoToTab === false) {
         return Promise.resolve()
@@ -1818,7 +1818,7 @@ var api = {
         process.$parent.append(process.$content);
       }
     },
-    closeMasterWindow: function closeMasterWindow (taskId, isCloseMaster) {
+    closeMasterWindow: function closeMasterWindow (taskId, closeTimeout) {
       var this$1 = this;
 
       var task = this.process[taskId || 'daemon'];
@@ -1826,7 +1826,9 @@ var api = {
         return
       }
       this.masterMoveParentByTaskId(taskId);
-      if (isCloseMaster === true) {
+      if (closeTimeout === false) {
+        return
+      } else if (closeTimeout === true || closeTimeout <= 0) {
         var taskDaemon = this.process.daemon;
         var activeId = task.activeId;
         if (task.mode !== 'master') {
@@ -1835,19 +1837,23 @@ var api = {
         (task.history || []).forEach(function (id) {
           taskDaemon.history.indexOf(id) > -1 || taskDaemon.history.push(id);
         });
-        return Promise.all((task.pids || []).map(function (id) {
+        var promises = (task.pids || []).map(function (id) {
           this$1.addTask({ taskId: 'daemon', id: id });
           return this$1.windowAppendChild({ taskId: 'daemon', id: id, autoToTab: false })
-        }))
+        });
+        if (task.hasContentWindow && task.contentWindow && !task.contentWindow.closed) {
+          task.contentWindow.close();
+        }
+        return Promise.all(promises)
           .then(function () {
             task.pids.length = 0;
             return this$1.refreshTask({ taskId: 'daemon', id: activeId })
           })
-      } else if (isCloseMaster === void 0) {
+      } else {
         clearTimeout(task.closeMasterTimer);
         task.closeMasterTimer = setTimeout(function () {
-          this$1.closeMasterWindow(taskId, true);
-        }, 5000);
+          this$1.closeMasterWindow(taskId, 0);
+        }, closeTimeout || 5000);
       }
     },
     closeAllMasterWindow: function closeAllMasterWindow () {
@@ -2053,21 +2059,21 @@ var apiUtil = {
     loadComponent: function loadComponent (pid) {
       var this$1 = this;
 
-      console.log('加载加载');
-      var item = this.process[pid];
+      var process = this.process[pid];
       // 判断该进程id是否是 一个有视图的进程
-      if (!item || !item.isHasView) {
+      if (!process || !process.isHasView) {
         // 既然没有视图，不需要渲染
         return Promise.reject(getError('不支持显示'))
       }
-      if (item.mode !== 'component') {
+      if (process.mode !== 'component') {
         return Promise.reject(getError('不支持加载'))
       }
 
-      item.error = null;
+      process.error = null;
       return this.routerReady()
-        .then(function () { return (this$1.$router.getMatchedComponents(item.src)); })
+        .then(function () { return (this$1.$router.getMatchedComponents(process.src)); })
         .then(function (matchedComponents) {
+          // 没有页码
           if (!matchedComponents.length) {
             var e = new Error('404');
             e.statusCode = 404;
@@ -2078,11 +2084,14 @@ var apiUtil = {
           }))
         })
         .then(function (components) {
-          item.component = Object.create(components[0]);
-          item.component.router = this$1.loadComponentRouter(item);
+          // 窗口新的空组件
+          process.component = Object.create(components[0]);
+          // 注入路由
+          process.component.router = this$1.loadComponentRouter(process, process.component);
         })
         .catch(function (e) {
-          item.error = e;
+          // 报错
+          process.error = e;
         })
     }
   }
@@ -2322,7 +2331,7 @@ var contentWindow;
 
 var apiTab = {
   methods: {
-    // 切换窗口
+    // 切换激活窗口
     tabToWindow: function tabToWindow (pid) {
       if (!this.isHasId(pid)) {
         return Promise.reject(getError('窗口不存在'))
@@ -2340,9 +2349,14 @@ var apiTab = {
     // 切换窗口
     tabToLastWindowByTaskId: function tabToLastWindowByTaskId (taskId) {
       var task = this.process[taskId || 'daemon'];
+      if (taskId !== 'daemon' && !(task.pids && task.pids.length)) {
+        // 如果不是主进程，而且任务栏没有任务了就关闭窗口
+        return this.closeMasterWindow(taskId, 0) || Promise.resolve()
+      }
       // 获取上一个历史的id
       return task && task.history[0] && this.tabToWindow(task.history[0])
     },
+    // 把指定 id窗口 切换到指定任务栏
     tabMoveMasterWindow: function tabMoveMasterWindow (ref) {
       var taskId = ref.taskId;
       var id = ref.id;
@@ -2416,6 +2430,7 @@ var apiAction = {
           src: input
         };
       } else if (typeof input === 'object') {
+        // 支持path和query
         // 遍历属性
         Object.keys(opts).forEach(function (key) {
           if (Object.hasOwnProperty.call(input, key)) {
@@ -2444,7 +2459,7 @@ var apiAction = {
         }
       } else if (typeof input === 'object') {
         // 获取目标路由信息
-        var ref$1 = this.$router.resolve(input.src);
+        var ref$1 = this.$router.resolve(input);
         var route$1 = ref$1.route;
         var href$1 = ref$1.href;
         options.src = href$1;
@@ -2562,27 +2577,27 @@ var handle = {
     dmw$iframeLoad: function dmw$iframeLoad (id, isReload) {
       var this$1 = this;
 
-      var item;
-      if (!(id && (item = this.process[id]))) {
+      var process;
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.mode !== 'iframe' || item.removeing) {
+      if (process.mode !== 'iframe' || process.removeing) {
         return Promise.resolve()
       }
       return Promise.resolve()
         .then(function () {
-          if (!item.$iframe) {
+          if (!process.$iframe) {
             return findOrSleepCall(this$1.$refs, 'if_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$iframe = $$2(ref);
+                process.$iframe = $$2(ref);
               })
           }
         })
         .then(function () {
-          if (isReload || !item.contentWindow || item.contentWindow.closed) {
-            item.contentWindow = (item.$iframe[0] && item.$iframe[0].contentWindow) || null;
-            if (!item.contentWindow || item.contentWindow.closed) {
+          if (isReload || !process.contentWindow || process.contentWindow.closed) {
+            process.contentWindow = (process.$iframe[0] && process.$iframe[0].contentWindow) || null;
+            if (!process.contentWindow || process.contentWindow.closed) {
               return sleep(500).then(function (_) { return this$1.dmw$iframeLoad(id, true); })
             }
           }
@@ -2591,20 +2606,20 @@ var handle = {
     dmw$mainWrapInit: function dmw$mainWrapInit (id) {
       var this$1 = this;
 
-      var item;
-      if (!(id && (item = this.process[id]))) {
+      var process;
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing || !item.isHasView) {
+      if (process.removeing || !process.isHasView) {
         return Promise.resolve()
       }
       return Promise.all((this.taskIds || []).map(function (taskId) {
-        item.$mainWrap || this$1.$set(item, '$mainWrap', {});
-        if (!item.$mainWrap[taskId]) {
+        process.$mainWrap || this$1.$set(process, '$mainWrap', {});
+        if (!process.$mainWrap[taskId]) {
           return findOrSleepCall(this$1.$refs, 'mc_' + taskId + '_p_' + id)
             .then(function (ref) {
               ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-              item.$mainWrap[taskId] = $$2(ref);
+              process.$mainWrap[taskId] = $$2(ref);
             })
         }
       }))
@@ -2612,113 +2627,113 @@ var handle = {
     dmw$viewInit: function dmw$viewInit (id) {
       var this$1 = this;
 
-      var item;
-      if (!(id && (item = this.process[id]))) {
+      var process;
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing || !item.isHasView) {
+      if (process.removeing || !process.isHasView) {
         return Promise.resolve()
       }
-      if (item.refinit) {
+      if (process.refinit) {
         return this.dmw$mainWrapInit(id)
       }
       return Promise.resolve()
         .then(function () {
-          if (!item.$parent) {
+          if (!process.$parent) {
             return findOrSleepCall(this$1.$refs, 'vp_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$parent = $$2(ref);
+                process.$parent = $$2(ref);
               })
           }
         })
         .then(function () {
-          if (!item.$content) {
+          if (!process.$content) {
             return findOrSleepCall(this$1.$refs, 'vb_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$content = $$2(ref);
+                process.$content = $$2(ref);
               })
           }
         })
         .then(function () { return this$1.dmw$mainWrapInit(id); })
         .then(function () {
           // 初始化完毕
-          item.refinit = true;
-          if (item.mode === 'iframe') {
-            item.init = true;
+          process.refinit = true;
+          if (process.mode === 'iframe') {
+            process.init = true;
             return this$1.dmw$iframeLoad(id)
-          } else if (item.mode === 'component') {
+          } else if (process.mode === 'component') {
             return this$1.loadComponent(id)
               .then(function () {
-                item.init = true;
+                process.init = true;
               })
               .catch(function (error) {
-                item.error = error;
+                process.error = error;
               })
           }
         })
         .then(function () {
-          item.init = true;
+          process.init = true;
         })
         .then(function () {
           // 移动窗口到
           return this$1.$ddvMultiWindow.windowAppendChild({
             id: id,
-            taskId: item.taskId
+            taskId: process.taskId
           })
         })
     },
     dmw$taskInit: function dmw$taskInit (id) {
       var this$1 = this;
 
-      var item;
-      if (!(id && (item = this.process[id]))) {
+      var process;
+      if (!(id && (process = this.process[id]))) {
         return
       }
-      if (item.refinit || item.removeing || !item.isTask) {
+      if (process.refinit || process.removeing || !process.isTask) {
         return
       }
       return Promise.resolve()
         .then(function () {
-          if (!item.$taskParent) {
+          if (!process.$taskParent) {
             return findOrSleepCall(this$1.$refs, 'tp_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$taskParent = $$2(ref);
+                process.$taskParent = $$2(ref);
               })
           }
         })
         .then(function () {
-          if (!item.$taskContent) {
+          if (!process.$taskContent) {
             return findOrSleepCall(this$1.$refs, 'tb_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$taskContent = $$2(ref);
+                process.$taskContent = $$2(ref);
               })
           }
         })
         .then(function () {
-          if (!item.$mainParent) {
+          if (!process.$mainParent) {
             return findOrSleepCall(this$1.$refs, 'mp_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$mainParent = $$2(ref);
+                process.$mainParent = $$2(ref);
               })
           }
         })
         .then(function () {
-          if (!item.$mainContent) {
+          if (!process.$mainContent) {
             return findOrSleepCall(this$1.$refs, 'mb_' + id)
               .then(function (ref) {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                item.$mainContent = $$2(ref);
+                process.$mainContent = $$2(ref);
               })
           }
         })
         .then(function () {
           // 初始化完毕
-          item.refinit = true;
+          process.refinit = true;
         })
     },
     dmw$processInit: function dmw$processInit () {
@@ -2727,14 +2742,14 @@ var handle = {
       var promises = [];
       this.pids.forEach(function (id) { return promises.push(); });
       return Promise.all(this.pids.map(function (id) {
-        var item;
-        if (!(id && (item = this$1.process[id]))) {
+        var process;
+        if (!(id && (process = this$1.process[id]))) {
           return Promise.resolve()
         }
-        if (item.isHasView) {
+        if (process.isHasView) {
           return this$1.dmw$viewInit(id)
         }
-        if (item.isTask) {
+        if (process.isTask) {
           return this$1.dmw$taskInit(id)
         }
         return Promise.resolve()
@@ -2939,7 +2954,7 @@ function registerHook (list, fn) {
 
 var tabRouter = {
   methods: {
-    loadComponentRouter: function loadComponentRouter (process) {
+    loadComponentRouter: function loadComponentRouter (process, component) {
       var router = Object.create(null);
 
       Object.assign(router, tabRouter$1, {
@@ -3232,7 +3247,7 @@ var master = {
     },
     closeMasterWindow: function closeMasterWindow () {
       try {
-        this.$ddvMultiWindow.closeMasterWindow(this.taskId);
+        this.$ddvMultiWindow.closeMasterWindow(this.taskId, 5000);
       } catch (e) {
         this.closeWindow();
       }
@@ -3593,4 +3608,3 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, getDdvMultiWindowByParent, Ready, EventMessageWindow };
-//# sourceMappingURL=ddv-multi-window.esm.js.map

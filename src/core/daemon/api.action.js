@@ -19,6 +19,7 @@ export default {
           src: input
         }
       } else if (typeof input === 'object') {
+        // 支持path和query
         // 遍历属性
         Object.keys(opts).forEach(key => {
           if (Object.hasOwnProperty.call(input, key)) {
@@ -45,7 +46,7 @@ export default {
         }
       } else if (typeof input === 'object') {
         // 获取目标路由信息
-        const { route, href } = this.$router.resolve(input.src)
+        const { route, href } = this.$router.resolve(input)
         options.src = href
         options.route = route
       }
