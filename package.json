@@ -15,8 +15,8 @@
   },
   "typings": "types/index.d.ts",
   "files": [
-    "src/*.js",
-    "dist/*.js",
+    "dist",
+    "src",
     "types/*.d.ts"
   ],
   "keywords": [
