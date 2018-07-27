@@ -2,6 +2,7 @@
 import { unDefDefaultByObj } from '../../util/is-def'
 import removeArray from '../../util/remove-array'
 import openDefaultData from '../../util/open-default-data'
+import stringifyQuery from '../../util/stringify-query'
 
 export default {
   methods: {
@@ -20,6 +21,14 @@ export default {
         }
       } else if (typeof input === 'object') {
         // 支持path和query
+        if (!input.src && input.path) {
+          let src = input.path
+
+          if (input.query) {
+            src += stringifyQuery(input.query)
+          }
+          input.src = src
+        }
         // 遍历属性
         Object.keys(opts).forEach(key => {
           if (Object.hasOwnProperty.call(input, key)) {
@@ -137,7 +146,10 @@ export default {
 
       if (process.mode === 'component') {
         if (process.component) {
-          process.component.reload()
+          // console.log(process, process.hook.beforeRefresh[0]())
+          //
+          process.component = null
+          // process.component.reload()
         }
       } else if (process.mode === 'iframe') {
         return this.getWindowByPid(id)

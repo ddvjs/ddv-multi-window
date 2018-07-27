@@ -187,7 +187,7 @@ function viewChildren (h) {
       })))
     } else if (process.mode === 'component') {
       if (process.component) {
-      // 视图模式 为 vue 组件视图
+        // 视图模式 为 vue 组件视图
         children.push(h(process.component, cloneRenderOptions(this.renderOptions.viewComponent, {
           props: {
           }

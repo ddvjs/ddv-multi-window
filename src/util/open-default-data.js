@@ -7,7 +7,7 @@ export default function () {
     // 是否可以关闭
     closable: true,
     // 是否可以刷新
-    refreshable: false,
+    refreshable: true,
     // 是否正在移除中
     removeing: false,
     // 窗口
@@ -20,6 +20,9 @@ export default function () {
     $parent: null,
     // 注入到那个具体窗口的容器
     $mainWrap: {},
+    hook: {
+      beforeRefresh: []
+    },
     // 组件
     component: null
   }

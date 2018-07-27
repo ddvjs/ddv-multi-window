@@ -14,7 +14,7 @@ import { assert, warn } from './util/warn'
 import getError, { throwError } from './util/get-error'
 import { unDefDefaultByObj } from './util/is-def'
 import { getWindow, getDaemonWindow } from './util/window'
-import getDdvMultiWindowByParent from './util/get-ddv-multi-window-by-parent'
+import getByParent from './util/get-by-parent'
 export let _Vue
 export class DdvMultiWindowGlobal {
   constructor () {
@@ -30,7 +30,7 @@ export class DdvMultiWindowGlobal {
     if (!app) {
       throw getError('必须传入app实例')
     }
-    const ddvMultiWindow = getDdvMultiWindowByParent(app)
+    const ddvMultiWindow = getByParent(app, '_ddvMultiWindow')
     if (ddvMultiWindow) {
       return Promise.resolve(ddvMultiWindow)
     }
@@ -203,11 +203,32 @@ export class DdvMultiWindowGlobal {
   RegisterInstanceInstall (Vue) {
     this.Vue.mixin({
       beforeCreate () {
-        console.log(this.process, this.$options)
-        this._ddvMultiWindow = (this.$parent && this.$parent._ddvMultiWindow) || void 0
+        this._ddvProcess = this.$options.process
+        if (!this._ddvProcess) {
+          this._ddvProcess = getByParent(this.$parent, '_ddvProcess')
+        }
+        if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
+          this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh)
+        }
+        // , this.process, this.$options
+        this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow')
+
+        if (!this._ddvMultiWindow && this._ddvProcess) {
+          this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
+            .then(ddvMultiWindow => {
+              this._ddvMultiWindow = ddvMultiWindow
+            })
+        }
         registerInstance(this, this)
       },
+      created () {
+      },
       destroyed () {
+        // this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
+        //   return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+        // })
+
+        // this._ddvProcess.hook.beforeRefresh.length && console.log(9, this._ddvProcess.hook.beforeRefresh)
         registerInstance(this)
       }
     })
@@ -216,7 +237,7 @@ export class DdvMultiWindowGlobal {
     Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
       get () {
         if (!this._ddvMultiWindow) {
-          this._ddvMultiWindow = getDdvMultiWindowByParent(this)
+          this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow')
         }
         if (!this._ddvMultiWindow) {
           throw getError('Not initialized')
@@ -246,7 +267,7 @@ const g = Object.assign((new DdvMultiWindowGlobal()), {
 })
 globalInit(g)
 
-export { g as default, getDdvMultiWindowByParent, Ready, EventMessageWindow }
+export { g as default, Ready, EventMessageWindow }
 
 if (inBrowser && window.Vue) {
   window.Vue.use(DdvMultiWindow)
