@@ -5,7 +5,7 @@ const encode = str => encodeURIComponent(str)
   .replace(encodeReserveRE, encodeReserveReplacer)
   .replace(commaRE, ',')
 
-export function stringifyQuery (obj) {
+export default function stringifyQuery (obj) {
   const res = obj ? Object.keys(obj).map(key => {
     const val = obj[key]
 
