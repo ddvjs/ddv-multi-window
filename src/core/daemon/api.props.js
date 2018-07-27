@@ -1,5 +1,6 @@
 export default {
   props: {
+    // 守护进程的id
     daemonId: {
       type: [Number, String],
       default: 'daemon'

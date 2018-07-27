@@ -14,6 +14,7 @@ import { assert, warn } from './util/warn'
 import getError, { throwError } from './util/get-error'
 import { unDefDefaultByObj } from './util/is-def'
 import { getWindow, getDaemonWindow } from './util/window'
+import getDdvMultiWindowByParent from './util/get-ddv-multi-window-by-parent'
 export let _Vue
 export class DdvMultiWindowGlobal {
   constructor () {
@@ -29,7 +30,7 @@ export class DdvMultiWindowGlobal {
     if (!app) {
       throw getError('必须传入app实例')
     }
-    const ddvMultiWindow = getParent(app)
+    const ddvMultiWindow = getDdvMultiWindowByParent(app)
     if (ddvMultiWindow) {
       return Promise.resolve(ddvMultiWindow)
     }
@@ -213,10 +214,13 @@ export class DdvMultiWindowGlobal {
   VuePrototypeInstall (Vue) {
     Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
       get () {
-        if (this._ddvMultiWindow) {
-          return this._ddvMultiWindow
+        if (!this._ddvMultiWindow) {
+          this._ddvMultiWindow = getDdvMultiWindowByParent(this)
+        }
+        if (!this._ddvMultiWindow) {
+          throw getError('Not initialized')
         } else {
-          throw getError('多窗口没有初始化')
+          return this._ddvMultiWindow
         }
       }
     })
@@ -241,21 +245,10 @@ const g = Object.assign((new DdvMultiWindowGlobal()), {
 })
 globalInit(g)
 
-export { g as default, getParent, Ready, EventMessageWindow }
+export { g as default, getDdvMultiWindowByParent, Ready, EventMessageWindow }
 
 if (inBrowser && window.Vue) {
   window.Vue.use(DdvMultiWindow)
-}
-function getParent (parent) {
-  parent = parent || this
-  if (parent && parent._ddvMultiWindow) {
-    return parent._ddvMultiWindow
-  }
-  if (parent && parent.$parent) {
-    return getParent(parent.$parent)
-  } else {
-    return null
-  }
 }
 function registerInstance (vm, callVal) {
   let i = vm.$options._parentVnode

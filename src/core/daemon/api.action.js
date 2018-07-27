@@ -69,30 +69,10 @@ export default {
       options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow
 
       // 把值为undefined使用后面的对象的默认值
-      unDefDefaultByObj(options, {
-        // 路径
-        src: '/',
-        // 标题
-        // title: 'New window',
-        // 是否可以关闭
-        closable: true,
-        // 是否可以刷新
-        refreshable: false,
-        // 是否正在移除中
-        removeing: false,
-        // 窗口
-        contentWindow: null,
-        // 视图的 可拖动的dom，是一个属性不变的jquery dom - 注意，不能去改变属性，避免vue重新渲染
-        $content: null,
-        // iframe 的 jquery
-        $iframe: null,
-        // 视图的 父层 jquery dom 不会改变，第一次的父层 - 注意，不能去改变属性，避免vue重新渲染
-        $parent: null,
-        // 注入到那个具体窗口的容器
-        $mainWrap: {},
-        // 组件
-        component: null
-      })
+      unDefDefaultByObj(Object.assign(options, {
+        // 守护进程id
+        daemonId: this.daemonId
+      }), opts)
 
       // 标题
       options.title = options.title || `新窗口[id:${options.id}]`
