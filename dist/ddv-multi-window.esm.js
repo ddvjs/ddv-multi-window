@@ -1352,7 +1352,7 @@ __vue_render__._withStripped = true;
   
 
   
-  var Task = __vue_normalize__(
+  var TaskComponent = __vue_normalize__(
     { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
     __vue_inject_styles__,
     __vue_script__,
@@ -1488,7 +1488,7 @@ function taskChildren (h) {
           'process-id': pid,
           'ddv-multi-window-type': 'taskBox'
         }
-      }), [taskChildrenRender.call(this$1, h, task)])
+      }), taskChildrenRender.call(this$1, h, task))
     ])
   })
 }
@@ -1543,15 +1543,19 @@ function taskChildrenRender (h, task) {
     process: this.process,
     handleTask: this.handleTask
   };
+  var children = [];
   if (this.$scopedSlots && this.$scopedSlots.task) {
-    return this.$scopedSlots.task(props)
-  } else if (this.$slots && this.$slots.task.length) {
-    this.$slots.task[0].data.props = props;
-    console.log(this.$slots.task, 89, h('div', { props: props }));
-    return [this.$slots.task]
+    children.push(this.$scopedSlots.task(props));
+  } else {
+    children.push(h(TaskComponent, {
+      key: 'task',
+      attrs: {
+        'ddv-multi-window-type': 'taskContent'
+      },
+      props: props
+    }));
   }
-  var task1 = (this.$slots && this.$slots.task.length) ? this.$slots.task : h('div');
-  return [task1]
+  return children
 
   /* return this.taskIds.map(pid => {
     const task = this.process[pid]
@@ -3522,7 +3526,7 @@ DdvMultiWindowGlobal.prototype.hookInstall = function hookInstall (Vue) {
 };
 DdvMultiWindowGlobal.prototype.componentInstall = function componentInstall (Vue) {
   // 安装组件
-  Vue.component(Task.name, Task);
+  Vue.component(TaskComponent.name, TaskComponent);
   Vue.component(Daemon.name, Daemon);
   Vue.component(button.name, button);
   Vue.component(master.name, master);
@@ -3596,4 +3600,3 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, getParent, Ready, EventMessageWindow };
-//# sourceMappingURL=ddv-multi-window.esm.js.map
