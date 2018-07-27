@@ -150,7 +150,7 @@ export default {
         return Promise.reject(new Error('this window is not found'))
       }
 
-      if (process.refreshable === true) {
+      if (process.refreshable === false) {
         return Promise.reject(new Error('this window does not support refresh'))
       }
 

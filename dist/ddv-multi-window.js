@@ -1176,11 +1176,22 @@ var __vue_render__ = function() {
                     _c("div", { staticClass: "menu-dropdown__arrow" }),
                     _vm._v(" "),
                     _c("li", { staticClass: "menu-dropdown__item" }, [
-                      _c("div", { staticClass: "tabTask-menu__dropItem" }, [
-                        _c("div", { staticClass: "text-center" }, [
-                          _vm._v("关闭全部")
-                        ])
-                      ])
+                      _c(
+                        "div",
+                        {
+                          staticClass: "tabTask-menu__dropItem",
+                          on: {
+                            click: function($event) {
+                              _vm.handleTask($event, "removeAll", _vm.task.id);
+                            }
+                          }
+                        },
+                        [
+                          _c("div", { staticClass: "text-center" }, [
+                            _vm._v("关闭全部")
+                          ])
+                        ]
+                      )
                     ]),
                     _vm._v(" "),
                     _c("li", { staticClass: "menu-dropdown__item" }, [
@@ -1562,15 +1573,6 @@ function taskChildrenRender (h, task) {
     }));
   }
   return children
-
-  /* return this.taskIds.map(pid => {
-    const task = this.process[pid]
-    // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
-      // 既然没有视图，不需要渲染
-      return
-    }
-  }) */
 }
 function viewChildren (h) {
   var this$1 = this;
@@ -2556,7 +2558,7 @@ var apiAction = {
         return Promise.reject(new Error('this window is not found'))
       }
 
-      if (process.refreshable === true) {
+      if (process.refreshable === false) {
         return Promise.reject(new Error('this window does not support refresh'))
       }
 

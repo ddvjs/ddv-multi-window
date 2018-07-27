@@ -48,7 +48,7 @@
             <ul class="menu-dropdown" v-show="isShowDropdown">
               <div class="menu-dropdown__arrow"></div>
               <li class="menu-dropdown__item">
-                <div class="tabTask-menu__dropItem">
+                <div class="tabTask-menu__dropItem" @click="handleTask($event, 'removeAll', task.id)">
                   <div class="text-center">关闭全部</div>
                 </div>
               </li>
