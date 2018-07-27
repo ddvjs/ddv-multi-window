@@ -42,19 +42,19 @@ export default {
       } else {
         tryNum = (tryNum || 0) + 1
       }
-      var item, taskIdLast
-      if (!(id && (item = this.process[id]))) {
+      var process, taskIdLast
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing) {
+      if (process.removeing) {
         return Promise.resolve()
       }
-      if (!(item.$mainWrap && item.$mainWrap[taskId])) {
+      if (!(process.$mainWrap && process.$mainWrap[taskId])) {
         return sleep(350).then(() => this.windowAppendChild({ id, taskId, autoToTab }, tryNum))
       }
-      item.$mainWrap[taskId].append(item.$content)
-      taskIdLast = item.taskId
-      item.taskId = taskId
+      process.$mainWrap[taskId].append(process.$content)
+      taskIdLast = process.taskId
+      process.taskId = taskId
 
       if (autoToTab === false) {
         return Promise.resolve()
@@ -72,13 +72,15 @@ export default {
         process.$parent.append(process.$content)
       }
     },
-    closeMasterWindow (taskId, isCloseMaster) {
+    closeMasterWindow (taskId, closeTimeout) {
       const task = this.process[taskId || 'daemon']
       if (!task) {
         return
       }
       this.masterMoveParentByTaskId(taskId)
-      if (isCloseMaster === true) {
+      if (closeTimeout === false) {
+        return
+      } else if (closeTimeout === true || closeTimeout <= 0) {
         const taskDaemon = this.process.daemon
         const activeId = task.activeId
         if (task.mode !== 'master') {
@@ -87,19 +89,23 @@ export default {
         (task.history || []).forEach(id => {
           taskDaemon.history.indexOf(id) > -1 || taskDaemon.history.push(id)
         })
-        return Promise.all((task.pids || []).map(id => {
+        const promises = (task.pids || []).map(id => {
           this.addTask({ taskId: 'daemon', id })
           return this.windowAppendChild({ taskId: 'daemon', id, autoToTab: false })
-        }))
+        })
+        if (task.hasContentWindow && task.contentWindow && !task.contentWindow.closed) {
+          task.contentWindow.close()
+        }
+        return Promise.all(promises)
           .then(() => {
             task.pids.length = 0
             return this.refreshTask({ taskId: 'daemon', id: activeId })
           })
-      } else if (isCloseMaster === void 0) {
+      } else {
         clearTimeout(task.closeMasterTimer)
         task.closeMasterTimer = setTimeout(() => {
-          this.closeMasterWindow(taskId, true)
-        }, 5000)
+          this.closeMasterWindow(taskId, 0)
+        }, closeTimeout || 5000)
       }
     },
     closeAllMasterWindow () {

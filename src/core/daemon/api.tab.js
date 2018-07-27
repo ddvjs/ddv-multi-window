@@ -21,6 +21,9 @@ export default {
     // 切换窗口
     tabToLastWindowByTaskId (taskId) {
       var task = this.process[taskId || 'daemon']
+      if (taskId !== 'daemon' && !(task.pids && task.pids.length)) {
+        return this.closeMasterWindow(taskId, 0) || Promise.resolve()
+      }
       // 获取上一个历史的id
       return task && task.history[0] && this.tabToWindow(task.history[0])
     },
