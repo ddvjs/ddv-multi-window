@@ -143,21 +143,21 @@ export default {
       return new Promise((resolve, reject) => this.$router.onReady(resolve, reject))
     },
     loadComponent (pid) {
-      console.log('加载加载')
-      const item = this.process[pid]
+      const process = this.process[pid]
       // 判断该进程id是否是 一个有视图的进程
-      if (!item || !item.isHasView) {
+      if (!process || !process.isHasView) {
         // 既然没有视图，不需要渲染
         return Promise.reject(getError('不支持显示'))
       }
-      if (item.mode !== 'component') {
+      if (process.mode !== 'component') {
         return Promise.reject(getError('不支持加载'))
       }
 
-      item.error = null
+      process.error = null
       return this.routerReady()
-        .then(() => (this.$router.getMatchedComponents(item.src)))
+        .then(() => (this.$router.getMatchedComponents(process.src)))
         .then(matchedComponents => {
+          // 没有页码
           if (!matchedComponents.length) {
             const e = new Error('404')
             e.statusCode = 404
@@ -168,11 +168,14 @@ export default {
           }))
         })
         .then(components => {
-          item.component = Object.create(components[0])
-          item.component.router = this.loadComponentRouter(item)
+          // 窗口新的空组件
+          process.component = Object.create(components[0])
+          // 注入路由
+          process.component.router = this.loadComponentRouter(process, process.component)
         })
         .catch(e => {
-          item.error = e
+          // 报错
+          process.error = e
         })
     }
   }

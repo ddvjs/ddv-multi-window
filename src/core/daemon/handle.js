@@ -6,171 +6,171 @@ const $ = require('jquery')
 export default {
   methods: {
     dmw$iframeLoad (id, isReload) {
-      var item
-      if (!(id && (item = this.process[id]))) {
+      var process
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.mode !== 'iframe' || item.removeing) {
+      if (process.mode !== 'iframe' || process.removeing) {
         return Promise.resolve()
       }
       return Promise.resolve()
         .then(() => {
-          if (!item.$iframe) {
+          if (!process.$iframe) {
             return findRefOrSleepCall(this.$refs, 'if_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$iframe = $(ref)
+                process.$iframe = $(ref)
               })
           }
         })
         .then(() => {
-          if (isReload || !item.contentWindow || item.contentWindow.closed) {
-            item.contentWindow = (item.$iframe[0] && item.$iframe[0].contentWindow) || null
-            if (!item.contentWindow || item.contentWindow.closed) {
+          if (isReload || !process.contentWindow || process.contentWindow.closed) {
+            process.contentWindow = (process.$iframe[0] && process.$iframe[0].contentWindow) || null
+            if (!process.contentWindow || process.contentWindow.closed) {
               return sleep(500).then(_ => this.dmw$iframeLoad(id, true))
             }
           }
         })
     },
     dmw$mainWrapInit (id) {
-      var item
-      if (!(id && (item = this.process[id]))) {
+      var process
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing || !item.isHasView) {
+      if (process.removeing || !process.isHasView) {
         return Promise.resolve()
       }
       return Promise.all((this.taskIds || []).map(taskId => {
-        item.$mainWrap || this.$set(item, '$mainWrap', {})
-        if (!item.$mainWrap[taskId]) {
+        process.$mainWrap || this.$set(process, '$mainWrap', {})
+        if (!process.$mainWrap[taskId]) {
           return findRefOrSleepCall(this.$refs, 'mc_' + taskId + '_p_' + id)
             .then(ref => {
               ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-              item.$mainWrap[taskId] = $(ref)
+              process.$mainWrap[taskId] = $(ref)
             })
         }
       }))
     },
     dmw$viewInit (id) {
-      var item
-      if (!(id && (item = this.process[id]))) {
+      var process
+      if (!(id && (process = this.process[id]))) {
         return Promise.resolve()
       }
-      if (item.removeing || !item.isHasView) {
+      if (process.removeing || !process.isHasView) {
         return Promise.resolve()
       }
-      if (item.refinit) {
+      if (process.refinit) {
         return this.dmw$mainWrapInit(id)
       }
       return Promise.resolve()
         .then(() => {
-          if (!item.$parent) {
+          if (!process.$parent) {
             return findRefOrSleepCall(this.$refs, 'vp_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$parent = $(ref)
+                process.$parent = $(ref)
               })
           }
         })
         .then(() => {
-          if (!item.$content) {
+          if (!process.$content) {
             return findRefOrSleepCall(this.$refs, 'vb_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$content = $(ref)
+                process.$content = $(ref)
               })
           }
         })
         .then(() => this.dmw$mainWrapInit(id))
         .then(() => {
           // 初始化完毕
-          item.refinit = true
-          if (item.mode === 'iframe') {
-            item.init = true
+          process.refinit = true
+          if (process.mode === 'iframe') {
+            process.init = true
             return this.dmw$iframeLoad(id)
-          } else if (item.mode === 'component') {
+          } else if (process.mode === 'component') {
             return this.loadComponent(id)
               .then(() => {
-                item.init = true
+                process.init = true
               })
               .catch(error => {
-                item.error = error
+                process.error = error
               })
           }
         })
         .then(() => {
-          item.init = true
+          process.init = true
         })
         .then(() => {
           // 移动窗口到
           return this.$ddvMultiWindow.windowAppendChild({
             id,
-            taskId: item.taskId
+            taskId: process.taskId
           })
         })
     },
     dmw$taskInit (id) {
-      var item
-      if (!(id && (item = this.process[id]))) {
+      var process
+      if (!(id && (process = this.process[id]))) {
         return
       }
-      if (item.refinit || item.removeing || !item.isTask) {
+      if (process.refinit || process.removeing || !process.isTask) {
         return
       }
       return Promise.resolve()
         .then(() => {
-          if (!item.$taskParent) {
+          if (!process.$taskParent) {
             return findRefOrSleepCall(this.$refs, 'tp_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$taskParent = $(ref)
+                process.$taskParent = $(ref)
               })
           }
         })
         .then(() => {
-          if (!item.$taskContent) {
+          if (!process.$taskContent) {
             return findRefOrSleepCall(this.$refs, 'tb_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$taskContent = $(ref)
+                process.$taskContent = $(ref)
               })
           }
         })
         .then(() => {
-          if (!item.$mainParent) {
+          if (!process.$mainParent) {
             return findRefOrSleepCall(this.$refs, 'mp_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$mainParent = $(ref)
+                process.$mainParent = $(ref)
               })
           }
         })
         .then(() => {
-          if (!item.$mainContent) {
+          if (!process.$mainContent) {
             return findRefOrSleepCall(this.$refs, 'mb_' + id)
               .then(ref => {
                 ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref
-                item.$mainContent = $(ref)
+                process.$mainContent = $(ref)
               })
           }
         })
         .then(() => {
           // 初始化完毕
-          item.refinit = true
+          process.refinit = true
         })
     },
     dmw$processInit () {
       var promises = []
       this.pids.forEach(id => promises.push())
       return Promise.all(this.pids.map(id => {
-        var item
-        if (!(id && (item = this.process[id]))) {
+        var process
+        if (!(id && (process = this.process[id]))) {
           return Promise.resolve()
         }
-        if (item.isHasView) {
+        if (process.isHasView) {
           return this.dmw$viewInit(id)
         }
-        if (item.isTask) {
+        if (process.isTask) {
           return this.dmw$taskInit(id)
         }
         return Promise.resolve()

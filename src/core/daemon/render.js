@@ -66,9 +66,9 @@ function tasks (h) {
 function taskChildren (h) {
   // 所有任务栏的任务集合
   return this.taskIds.map(pid => {
-    const task = this.process[pid]
+    const process = this.process[pid]
     // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
+    if (!process || !process.isTask) {
       // 既然没有视图，不需要渲染
       return
     }
@@ -89,16 +89,16 @@ function taskChildren (h) {
           'process-id': pid,
           'ddv-multi-window-type': 'taskBox'
         }
-      }), taskChildrenRender.call(this, h, task))
+      }), taskChildrenRender.call(this, h, process))
     ])
   })
 }
 function mainChildren (h) {
   // 窗口集合
   return this.taskIds.map(taskId => {
-    const task = this.process[taskId]
+    const process = this.process[taskId]
     // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
+    if (!process || !process.isTask) {
       // 既然没有视图，不需要渲染
       return
     }
@@ -130,7 +130,7 @@ function mainChildren (h) {
         directives: [{
           name: 'show',
           rawName: 'show',
-          value: task && pid === task.activeId
+          value: process && pid === process.activeId
         }]
       }))))
     ])
@@ -158,15 +158,15 @@ function taskChildrenRender (h, task) {
 }
 function viewChildren (h) {
   return this.viewIds.map(pid => {
-    const pitem = this.process[pid]
+    const process = this.process[pid]
     // 判断该进程id是否是 一个有视图的进程
-    if (!pitem || !pitem.isHasView) {
+    if (!process || !process.isHasView) {
       // 既然没有视图，不需要渲染
       return
     }
     // 该窗口[视图]的子元素
     const children = []
-    if (!pitem.init) {
+    if (!process.init) {
       children.push(h(LoadComponent, cloneRenderOptions(this.renderOptions.viewLoad, {
         key: 'load',
         attrs: {
@@ -174,7 +174,7 @@ function viewChildren (h) {
           'ddv-multi-window-type': 'loadBox'
         }
       })))
-    } else if (pitem.error) {
+    } else if (process.error) {
       children.push(h(ErrorComponent, cloneRenderOptions(this.renderOptions.viewError, {
         key: 'error',
         attrs: {
@@ -185,26 +185,26 @@ function viewChildren (h) {
           error: this.error
         }
       })))
-    } else if (pitem.mode === 'component') {
-      if (pitem.component) {
+    } else if (process.mode === 'component') {
+      if (process.component) {
       // 视图模式 为 vue 组件视图
-        children.push(h(pitem.component, cloneRenderOptions(this.renderOptions.viewComponent, {
+        children.push(h(process.component, cloneRenderOptions(this.renderOptions.viewComponent, {
           props: {
           }
         })))
       } else {
-        pitem.init = false
+        process.init = false
         this.loadComponent(pid)
           .then(() => {
-            pitem.init = true
+            process.init = true
           })
           .catch(error => {
-            pitem.error = error
+            process.error = error
           })
       }
       // 插入一个 iframe 的渲染
       // children.push(h('iframe', data))
-    } else if (pitem.mode === 'iframe') {
+    } else if (process.mode === 'iframe') {
       // 插入一个 iframe 的渲染
       children.push(h('iframe', cloneRenderOptions(this.renderOptions.viewIframe, {
         // 修改key
@@ -217,7 +217,7 @@ function viewChildren (h) {
         },
         attrs: {
           // 窗口的地址
-          src: pitem.src,
+          src: process.src,
           // 窗口的id
           'process-id': pid,
           // 类型

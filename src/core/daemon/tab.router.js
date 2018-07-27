@@ -1,6 +1,6 @@
 export default {
   methods: {
-    loadComponentRouter (process) {
+    loadComponentRouter (process, component) {
       var router = Object.create(null)
 
       Object.assign(router, tabRouter, {
