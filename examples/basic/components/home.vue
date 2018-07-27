@@ -2,8 +2,7 @@
   <div>
     <a href="/">&larr; Examples index</a>
     <ddv-multi-window-daemon ref="windowDaemon" openMasterWindowSrc="/basic/master">
-      <ddv-multi-window-task-template slot="task" slot-scope="scope" v-bind="scope"/>
-      <!-- <task slot="task" slot-scope="scope" v-bind="scope"/> -->
+      <!-- <ddv-multi-window-task-template slot="task" slot-scope="scope" v-bind="scope"/> -->
     </ddv-multi-window-daemon>
     <section>
       <ddv-multi-window-task />
@@ -18,7 +17,7 @@
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import ddvMultiWindow from 'ddv-multi-window'
-import task from './task.vue'
+import '@/dist/style/ddv-multi-window.css'
 
 Vue.use(ddvMultiWindow, { 'namespace': '__DDV_MULTI_WINDOW__' })
 Vue.use(ElementUI)
@@ -27,9 +26,7 @@ export default {
   data () {
     return {}
   },
-  components: {
-    task
-  },
+  components: {},
   methods: {},
   mounted () {
     this.$refs.windowDaemon.onError(e => {
