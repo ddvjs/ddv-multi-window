@@ -203,6 +203,7 @@ export class DdvMultiWindowGlobal {
   RegisterInstanceInstall (Vue) {
     this.Vue.mixin({
       beforeCreate () {
+        console.log(this.process, this.$options)
         this._ddvMultiWindow = (this.$parent && this.$parent._ddvMultiWindow) || void 0
         registerInstance(this, this)
       },

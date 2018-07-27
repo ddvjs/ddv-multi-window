@@ -1,5 +1,5 @@
 import sleep from '../../util/sleep'
-import getError, { throwError } from '../../util/get-error'
+import { throwError } from '../../util/get-error'
 import createNewPid from '../create-new-pid'
 import { unDefDefault, unDefDefaultByObj } from '../../util/is-def'
 
@@ -141,42 +141,6 @@ export default {
     // 路由准备完毕
     routerReady () {
       return new Promise((resolve, reject) => this.$router.onReady(resolve, reject))
-    },
-    loadComponent (pid) {
-      const process = this.process[pid]
-      // 判断该进程id是否是 一个有视图的进程
-      if (!process || !process.isHasView) {
-        // 既然没有视图，不需要渲染
-        return Promise.reject(getError('不支持显示'))
-      }
-      if (process.mode !== 'component') {
-        return Promise.reject(getError('不支持加载'))
-      }
-
-      process.error = null
-      return this.routerReady()
-        .then(() => (this.$router.getMatchedComponents(process.src)))
-        .then(matchedComponents => {
-          // 没有页码
-          if (!matchedComponents.length) {
-            const e = new Error('404')
-            e.statusCode = 404
-            return Promise.reject(e)
-          }
-          return Promise.all(matchedComponents.map(Component => {
-            return Component()
-          }))
-        })
-        .then(components => {
-          // 窗口新的空组件
-          process.component = Object.create(components[0])
-          // 注入路由
-          process.component.router = this.loadComponentRouter(process, process.component)
-        })
-        .catch(e => {
-          // 报错
-          process.error = e
-        })
     }
   }
 }
