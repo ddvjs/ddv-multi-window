@@ -2096,6 +2096,7 @@ var apiUtil = {
 
 var apiProps = {
   props: {
+    // 守护进程的id
     daemonId: {
       type: [Number, String],
       default: 'daemon'
@@ -2475,30 +2476,10 @@ var apiAction = {
       options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow;
 
       // 把值为undefined使用后面的对象的默认值
-      unDefDefaultByObj(options, {
-        // 路径
-        src: '/',
-        // 标题
-        // title: 'New window',
-        // 是否可以关闭
-        closable: true,
-        // 是否可以刷新
-        refreshable: false,
-        // 是否正在移除中
-        removeing: false,
-        // 窗口
-        contentWindow: null,
-        // 视图的 可拖动的dom，是一个属性不变的jquery dom - 注意，不能去改变属性，避免vue重新渲染
-        $content: null,
-        // iframe 的 jquery
-        $iframe: null,
-        // 视图的 父层 jquery dom 不会改变，第一次的父层 - 注意，不能去改变属性，避免vue重新渲染
-        $parent: null,
-        // 注入到那个具体窗口的容器
-        $mainWrap: {},
-        // 组件
-        component: null
-      });
+      unDefDefaultByObj(Object.assign(options, {
+        // 守护进程id
+        daemonId: this.daemonId
+      }), opts);
 
       // 标题
       options.title = options.title || ("新窗口[id:" + (options.id) + "]");
@@ -2967,6 +2948,7 @@ var tabRouter = {
       var router = Object.create(null);
 
       Object.assign(router, tabRouter$1, {
+        daemonApp: this,
         $parentRouter: this.$router,
         process: process,
         options: this.$router.options
@@ -2984,12 +2966,17 @@ var tabRouter$1 = {
   },
   init: function init (vm, a, b) {
     vm._route = this.process.route;
-    this.vm = vm;
+    this.$vm = vm;
     this.history = {};
     this.history.current = this.process.route;
   },
   push: function push (location, onComplete, onAbort) {
-    this.vm.$ddvMultiWindow.open(location);
+    if (this.$vm.$ddvMultiWindow) {
+      this.$vm.$ddvMultiWindow.open(location);
+    } else {
+      return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
+        .then(function (ddvMultiWindow) { return ddvMultiWindow.open(location); })
+    }
     // this.$parentRouter.push('/#44')
   },
   replace: function replace (location, onComplete, onAbort) {
@@ -3355,6 +3342,18 @@ var MasterView = {
   }
 }
 
+function getDdvMultiWindowByParent (parent) {
+  parent = parent || this;
+  if (parent && parent._ddvMultiWindow) {
+    return parent._ddvMultiWindow
+  }
+  if (parent && parent.$parent) {
+    return getDdvMultiWindowByParent(parent.$parent)
+  } else {
+    return null
+  }
+}
+
 var _Vue;
 var DdvMultiWindowGlobal = function DdvMultiWindowGlobal () {
   this.Vue = null;
@@ -3371,7 +3370,7 @@ DdvMultiWindowGlobal.prototype.masterInit = function masterInit (app) {
   if (!app) {
     throw getError('必须传入app实例')
   }
-  var ddvMultiWindow = getParent(app);
+  var ddvMultiWindow = getDdvMultiWindowByParent(app);
   if (ddvMultiWindow) {
     return Promise.resolve(ddvMultiWindow)
   }
@@ -3557,10 +3556,13 @@ DdvMultiWindowGlobal.prototype.VuePrototypeInstall = function VuePrototypeInstal
 
   Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get: function get () {
-      if (this._ddvMultiWindow) {
-        return this._ddvMultiWindow
+      if (!this._ddvMultiWindow) {
+        this._ddvMultiWindow = getDdvMultiWindowByParent(this);
+      }
+      if (!this._ddvMultiWindow) {
+        throw getError('Not initialized')
       } else {
-        throw getError('多窗口没有初始化')
+        return this._ddvMultiWindow
       }
     }
   });
@@ -3587,17 +3589,6 @@ globalInit(g);
 if (inBrowser && window.Vue) {
   window.Vue.use(DdvMultiWindow);
 }
-function getParent (parent) {
-  parent = parent || this;
-  if (parent && parent._ddvMultiWindow) {
-    return parent._ddvMultiWindow
-  }
-  if (parent && parent.$parent) {
-    return getParent(parent.$parent)
-  } else {
-    return null
-  }
-}
 function registerInstance (vm, callVal) {
   var i = vm.$options._parentVnode;
   if (isDef(i) && isDef(i = i.data) && isDef(i = i.registerDdvMultiWindowInstance)) {
@@ -3608,7 +3599,7 @@ function registerInstance (vm, callVal) {
 exports._Vue = _Vue;
 exports.DdvMultiWindowGlobal = DdvMultiWindowGlobal;
 exports.default = g;
-exports.getParent = getParent;
+exports.getDdvMultiWindowByParent = getDdvMultiWindowByParent;
 exports.Ready = Ready;
 exports.EventMessageWindow = EventMessageWindow;
 
