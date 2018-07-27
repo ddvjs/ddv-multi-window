@@ -155,15 +155,6 @@ function taskChildrenRender (h, task) {
     }))
   }
   return children
-
-  /* return this.taskIds.map(pid => {
-    const task = this.process[pid]
-    // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
-      // 既然没有视图，不需要渲染
-      return
-    }
-  }) */
 }
 function viewChildren (h) {
   return this.viewIds.map(pid => {
