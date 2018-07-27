@@ -1,4 +1,4 @@
-import getDdvMultiWindowByParent from './util/get-ddv-multi-window-by-parent'
+import getByParent from '../../util/get-by-parent'
 
 export default {
   data () {
@@ -17,7 +17,7 @@ export default {
   },
   beforeCreate () {
     if (!this._ddvMultiWindow) {
-      this._ddvMultiWindow = getDdvMultiWindowByParent(this) || this._ddvMultiWindow
+      this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow') || this._ddvMultiWindow
     }
     console.log('beforeCreate', this._ddvMultiWindow)
   },
