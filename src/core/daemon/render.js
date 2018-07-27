@@ -1,4 +1,5 @@
 import LoadComponent from '../../components/load'
+import TaskComponent from '../../components/task.vue'
 import cloneRenderOptions from '../../util/clone-render-options'
 const ErrorComponent = LoadComponent
 export default function render (h) {
@@ -88,7 +89,7 @@ function taskChildren (h) {
           'process-id': pid,
           'ddv-multi-window-type': 'taskBox'
         }
-      }), [taskChildrenRender.call(this, h, task)])
+      }), taskChildrenRender.call(this, h, task))
     ])
   })
 }
@@ -141,15 +142,19 @@ function taskChildrenRender (h, task) {
     process: this.process,
     handleTask: this.handleTask
   }
+  const children = []
   if (this.$scopedSlots && this.$scopedSlots.task) {
-    return this.$scopedSlots.task(props)
-  } else if (this.$slots && this.$slots.task.length) {
-    this.$slots.task[0].data.props = props
-    console.log(this.$slots.task, 89, h('div', { props }))
-    return [this.$slots.task]
+    children.push(this.$scopedSlots.task(props))
+  } else {
+    children.push(h(TaskComponent, {
+      key: 'task',
+      attrs: {
+        'ddv-multi-window-type': 'taskContent'
+      },
+      props
+    }))
   }
-  const task1 = (this.$slots && this.$slots.task.length) ? this.$slots.task : h('div')
-  return [task1]
+  return children
 
   /* return this.taskIds.map(pid => {
     const task = this.process[pid]
