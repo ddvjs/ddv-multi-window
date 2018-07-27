@@ -90,7 +90,6 @@
   },
   "homepage": "https://github.com/ddvjs/ddv-multi-window#readme",
   "dependencies": {
-    "ddv-auth": "0.0.9",
     "jquery": "^3.3.1"
   }
 }
