@@ -13,17 +13,17 @@ export default {
   }
 }
 const tabRouter = {
-  resolve (...a) {
-    return this.$parentRouter.resolve.apply(this.$parentRouter, a)
+  resolve (...opts) {
+    return this.$parentRouter.resolve.apply(this.$parentRouter, opts)
   },
   init (vm, a, b) {
     vm._route = this.process.route
-    this.$ddvMultiWindow = vm.$ddvMultiWindow
+    this.vm = vm
     this.history = {}
     this.history.current = this.process.route
   },
   push (location, onComplete, onAbort) {
-    this.$ddvMultiWindow.open(location)
+    this.vm.$ddvMultiWindow.open(location)
     // this.$parentRouter.push('/#44')
   },
   replace (location, onComplete, onAbort) {

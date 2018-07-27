@@ -1,7 +1,13 @@
 * {
   box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: 0
 }
-.iconfont {
+ul, li {
+	list-style: none;
+}
+.dmw-icon {
   display: inline-block;
   speak: none;
   font-style: normal;
@@ -10,11 +16,13 @@
   text-transform: none;
   line-height: 1;
   vertical-align: baseline;
-  font-size: 14px;
   margin: 0 2px;
 }
 .f12 {
   font-size: 12px !important;  
+}
+.f14 {
+  font-size: 14px !important;  
 }
 .clearfix {
   *zoom: 1

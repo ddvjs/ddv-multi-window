@@ -6,7 +6,7 @@ import openDefaultData from '../../util/open-default-data'
 export default {
   methods: {
     open (input, taskId) {
-      const d = openDefaultData()
+      const opts = openDefaultData()
       // 构建配置选项
       var options = Object.create(null)
       // 如果传入参数是一个字符串
@@ -20,7 +20,7 @@ export default {
         }
       } else if (typeof input === 'object') {
         // 遍历属性
-        Object.keys(d).forEach(key => {
+        Object.keys(opts).forEach(key => {
           if (Object.hasOwnProperty.call(input, key)) {
           // 复制属性
             options[key] = input[key]
@@ -38,21 +38,23 @@ export default {
         }
         // 找到组件
         if (matchedComponents.length) {
-          console.log(8888, this.$router)
           // 获取目标路由信息
           const { route, href } = this.$router.resolve(options.src)
           options.src = href
           options.route = route
         }
       } else if (typeof input === 'object') {
-        console.log(9999, this.$router)
         // 获取目标路由信息
-        const { route, href } = this.$router.resolve('admin/home')
+        const { route, href } = this.$router.resolve(input.src)
         options.src = href
         options.route = route
       }
 
-      input.taskId = input.taskId || taskId
+      if (typeof input === 'object') {
+        options.taskId = input.taskId || taskId
+      } else {
+        options.taskId = options.taskId || taskId
+      }
       // 窗口类型
       options.mode = options.mode || 'iframe'
       // 创建窗口id
@@ -65,12 +67,13 @@ export default {
       options.isHasTask = this.modeNotTasks.indexOf(options.mode) === -1
       // 是否有浏览器的全局窗口对象
       options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow
+
       // 把值为undefined使用后面的对象的默认值
       unDefDefaultByObj(options, {
         // 路径
         src: '/',
         // 标题
-        title: 'New window',
+        // title: 'New window',
         // 是否可以关闭
         closable: true,
         // 是否可以刷新
@@ -90,6 +93,7 @@ export default {
         // 组件
         component: null
       })
+
       // 标题
       options.title = options.title || `新窗口[id:${options.id}]`
       // 判断一下 - 如果打开的窗口类型需要任务栏的，并且任务栏中找不到任务栏id
