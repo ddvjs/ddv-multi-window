@@ -54,6 +54,15 @@ export default {
       title: 'test5',
       src: '/basic/bar'
     })
+    this.$refs.windowDaemon.open({
+      refreshable: true,
+      title: 'test6',
+      path: '/basic/bar',
+      query: {
+        xx: 11,
+        iii: 222
+      }
+    })
   }
 }
 </script>
