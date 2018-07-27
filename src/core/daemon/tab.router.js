@@ -1,9 +1,10 @@
 export default {
   methods: {
-    loadComponentRouter (process) {
+    loadComponentRouter (process, component) {
       var router = Object.create(null)
 
       Object.assign(router, tabRouter, {
+        daemonApp: this,
         $parentRouter: this.$router,
         process,
         options: this.$router.options
@@ -18,12 +19,17 @@ const tabRouter = {
   },
   init (vm, a, b) {
     vm._route = this.process.route
-    this.vm = vm
+    this.$vm = vm
     this.history = {}
     this.history.current = this.process.route
   },
   push (location, onComplete, onAbort) {
-    this.vm.$ddvMultiWindow.open(location)
+    if (this.$vm.$ddvMultiWindow) {
+      this.$vm.$ddvMultiWindow.open(location)
+    } else {
+      return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
+        .then(ddvMultiWindow => ddvMultiWindow.open(location))
+    }
     // this.$parentRouter.push('/#44')
   },
   replace (location, onComplete, onAbort) {

@@ -68,7 +68,8 @@ module.exports = {
   resolve: {
     alias: {
       vue: 'vue/dist/vue.esm.js',
-      'ddv-multi-window': path.join(__dirname, '..', 'src')
+      'ddv-multi-window': path.join(__dirname, '..', 'src'),
+      '@': path.join(__dirname, '../')
     }
   },
 

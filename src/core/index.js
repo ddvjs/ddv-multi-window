@@ -1,4 +1,3 @@
-
 class DdvMultiWindow {
   constructor () {
     this.map = Object.create(null)

@@ -95,7 +95,7 @@ export default {
     },
     closeMasterWindow () {
       try {
-        this.$ddvMultiWindow.closeMasterWindow(this.taskId)
+        this.$ddvMultiWindow.closeMasterWindow(this.taskId, 5000)
       } catch (e) {
         this.closeWindow()
       }

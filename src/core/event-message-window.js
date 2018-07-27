@@ -1,9 +1,9 @@
 import { getError } from '../util/get-error'
+import createNewPid from './create-new-pid'
+import isFunction from '../util/is-function'
+import argsToArray from '../util/args-to-array'
 
 export { EventMessageWindow, EventMessageWindow as default }
-
-// 工具类
-const util = require('ddv-auth/util')
 // 获取一个错误对象的方法
 
 Object.assign(EventMessageWindow.prototype, {
@@ -50,7 +50,7 @@ function constructor (options) {
   }
   this.selfWindow = options.selfWindow || ((typeof window === 'object' && window === window.window) ? window : this.selfWindow)
   this.setGetContentWindow(options.getContentWindow)
-  if (util.isFunction(options.onCatch)) {
+  if (isFunction(options.onCatch)) {
     this.onCatch = options.onCatch
   }
   this.onReceives = {}
@@ -58,7 +58,7 @@ function constructor (options) {
   postEmitCallCbListener.call(this)
 }
 function setGetContentWindow (fn) {
-  if (util.isFunction(fn)) {
+  if (isFunction(fn)) {
     this.getContentWindow = fn
   } else {
     this.getContentWindow = function () {
@@ -97,7 +97,7 @@ function postEmitCallCb (id, res, e) {
 // 发送信息
 function postEmitCall (type, data, win, transfer) {
   return new Promise(function (resolve, reject) {
-    var id = util.createNewPid()
+    var id = createNewPid()
     this.postEmitCallCbs[id] = [resolve, reject]
     this.postEmit(type, data, win, transfer, id, true)
       .then(function () {
@@ -114,7 +114,7 @@ function postEmit (type, data, win, transfer, id, isCb) {
   if (typeof win === 'object') {
     res = win
   } else {
-    args = util.argsToArray(arguments)
+    args = argsToArray(arguments)
     type = data = res = transfer = id = isCb = void 0
     // 获取 window 对象
     return this.getContentWindow(win)
@@ -125,7 +125,7 @@ function postEmit (type, data, win, transfer, id, isCb) {
         return postEmit.apply(this, res)
       }.bind(this))
   }
-  id = id || util.createNewPid()
+  id = id || createNewPid()
   // 序列化
   var message = JSON.stringify({
     id: id,
@@ -272,7 +272,7 @@ function emit (event) {
 function emitFn (fn) {
   return (new Promise(function (resolve, reject) {
     var res = fn(this.event)
-    if (util.isFunction(res.then)) {
+    if (isFunction(res.then)) {
       this.isCb = true
       res.then(resolve, reject)
     } else if (res) {

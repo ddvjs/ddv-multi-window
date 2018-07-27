@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.1
+  * ddv-multi-window v0.1.0
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -217,8 +217,36 @@ function throwError (message, name, isPromise, errorId, stack) {
   }
 }
 
-// 工具类
-var util = require('ddv-auth/util');
+// 创建最后总和
+var createNewidSumLast = 0;
+// 创建最后时间
+var createNewidTimeLast = 0;
+function createNewPid (is10) {
+  var r;
+  if (createNewidTimeLast !== time()) {
+    createNewidTimeLast = time();
+    createNewidSumLast = 0;
+  }
+  r = createNewidTimeLast.toString() + (++createNewidSumLast).toString();
+  // 使用36进制
+  if (!is10) {
+    r = parseInt(r, 10).toString(36);
+  }
+  return r
+}
+
+function time () {
+  return parseInt(((new Date()).getTime()) / 1000)
+}
+
+function isFunction (fn) {
+  return typeof fn === 'function'
+}
+
+function argsToArray (args) {
+  return Array.prototype.slice.call(args)
+}
+
 // 获取一个错误对象的方法
 
 Object.assign(EventMessageWindow.prototype, {
@@ -265,7 +293,7 @@ function constructor$2 (options) {
   }
   this.selfWindow = options.selfWindow || ((typeof window === 'object' && window === window.window) ? window : this.selfWindow);
   this.setGetContentWindow(options.getContentWindow);
-  if (util.isFunction(options.onCatch)) {
+  if (isFunction(options.onCatch)) {
     this.onCatch = options.onCatch;
   }
   this.onReceives = {};
@@ -273,7 +301,7 @@ function constructor$2 (options) {
   postEmitCallCbListener.call(this);
 }
 function setGetContentWindow (fn) {
-  if (util.isFunction(fn)) {
+  if (isFunction(fn)) {
     this.getContentWindow = fn;
   } else {
     this.getContentWindow = function () {
@@ -312,7 +340,7 @@ function postEmitCallCb (id, res, e) {
 // 发送信息
 function postEmitCall (type, data, win, transfer) {
   return new Promise(function (resolve, reject) {
-    var id = util.createNewPid();
+    var id = createNewPid();
     this.postEmitCallCbs[id] = [resolve, reject];
     this.postEmit(type, data, win, transfer, id, true)
       .then(function () {
@@ -329,7 +357,7 @@ function postEmit (type, data, win, transfer, id, isCb) {
   if (typeof win === 'object') {
     res = win;
   } else {
-    args = util.argsToArray(arguments);
+    args = argsToArray(arguments);
     type = data = res = transfer = id = isCb = void 0;
     // 获取 window 对象
     return this.getContentWindow(win)
@@ -340,7 +368,7 @@ function postEmit (type, data, win, transfer, id, isCb) {
         return postEmit.apply(this, res)
       }.bind(this))
   }
-  id = id || util.createNewPid();
+  id = id || createNewPid();
   // 序列化
   var message = JSON.stringify({
     id: id,
@@ -491,7 +519,7 @@ function emit (event) {
 function emitFn (fn) {
   return (new Promise(function (resolve, reject) {
     var res = fn(this.event);
-    if (util.isFunction(res.then)) {
+    if (isFunction(res.then)) {
       this.isCb = true;
       res.then(resolve, reject);
     } else if (res) {
@@ -1142,11 +1170,22 @@ var __vue_render__ = function() {
                     _c("div", { staticClass: "menu-dropdown__arrow" }),
                     _vm._v(" "),
                     _c("li", { staticClass: "menu-dropdown__item" }, [
-                      _c("div", { staticClass: "tabTask-menu__dropItem" }, [
-                        _c("div", { staticClass: "text-center" }, [
-                          _vm._v("关闭全部")
-                        ])
-                      ])
+                      _c(
+                        "div",
+                        {
+                          staticClass: "tabTask-menu__dropItem",
+                          on: {
+                            click: function($event) {
+                              _vm.handleTask($event, "removeAll", _vm.task.id);
+                            }
+                          }
+                        },
+                        [
+                          _c("div", { staticClass: "text-center" }, [
+                            _vm._v("关闭全部")
+                          ])
+                        ]
+                      )
                     ]),
                     _vm._v(" "),
                     _c("li", { staticClass: "menu-dropdown__item" }, [
@@ -1230,13 +1269,9 @@ var __vue_staticRenderFns__ = [];
 __vue_render__._withStripped = true;
 
   /* style */
-  var __vue_inject_styles__ = function (inject) {
-    if (!inject) { return }
-    inject("data-v-49a3fd3a_0", { source: "\n*[data-v-49a3fd3a] {\n  box-sizing: border-box;\n  padding: 0;\n  margin: 0;\n  border: 0\n}\nul[data-v-49a3fd3a], li[data-v-49a3fd3a] {\n\tlist-style: none;\n}\n.dmw-icon[data-v-49a3fd3a] {\n  display: inline-block;\n  speak: none;\n  font-style: normal;\n  font-weight: 400;\n  font-variant: normal;\n  text-transform: none;\n  line-height: 1;\n  vertical-align: baseline;\n  margin: 0 2px;\n}\n.f12[data-v-49a3fd3a] {\n  font-size: 12px !important;\n}\n.f14[data-v-49a3fd3a] {\n  font-size: 14px !important;\n}\n.clearfix[data-v-49a3fd3a] {\n  *zoom: 1\n}\n.clearfix[data-v-49a3fd3a]:after {\n  visibility: hidden;\n  clear: both;\n  display: block;\n  content: \".\";\n  height: 0;\n}\n.tabTask-menu[data-v-49a3fd3a] {\n  background: #3177cb;\n  font-size: 13px;\n  color: #000;\n}\n.tabTask-menu__li[data-v-49a3fd3a] {\n  float: left;\n  background: #e0e1e5;\n  width: auto;\n  height: 32px;\n  line-height: 32px;\n  padding: 0 10px;\n  margin-left: 5px;\n  font-family: 'PingFangSC-Medium';\n  -webkit-box-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  max-width: 150px;\n  min-width: 120px;\n  margin-top: 1px;\n  cursor: default;\n}\n.transition[data-v-49a3fd3a] {\n  transition: all 0.3s;\n}\n.tabTask-menu__item[data-v-49a3fd3a] {\n  float: left;\n  overflow: hidden;\n  -o-text-overflow: ellipsis;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 30px;\n  max-width: 86px;\n}\n.tabTask-menu__ul[data-v-49a3fd3a] {\n  padding: 6px 0 0 20px;\n  width: 100%;\n  display: -webkit-box;\n  display: -moz-flex;\n  display: -ms-flexbox;\n  display: flex;\n  height: 40px;\n  border: 1px solid rgba(0, 0, 0, 0);\n  /* overflow-x: auto; */\n}\n.tabTask-menu__linow[data-v-49a3fd3a] {\n  background: #fff;\n  border-bottom: 1px solid #fff;\n}\n.tabTask-menu__breadcrumb[data-v-49a3fd3a] {\n  height: 35px;\n  padding-top: 12px;\n  padding-left: 20px;\n  border-bottom: 1px solid #dadee4;\n  border-top: 1px solid #dadee4;\n  background: #fff;\n  font-size: 13px;\n}\n.tabTask-menu__arrow[data-v-49a3fd3a] {\n  float: left;\n  background: #ebebeb;\n  width: 32px;\n  height: 32px;\n  line-height: 32px;\n  /* padding: 0 10px; */\n  margin-left: 5px;\n  -webkit-box-flex: 1;\n  -ms-flex: 1;\n  flex: 1;\n  max-width: 32px;\n  margin-top: 1px;\n  text-align: center;\n  border-top-right-radius: 5px;\n  position: relative;\n  cursor: pointer;\n  /* transition: all 0.3s; */\n}\n.tabTask-menu__pull[data-v-49a3fd3a] {\n  margin-left: -2px;\n}\n.tabTask-menu__dropItem[data-v-49a3fd3a] {\n  width: 115px;\n  height: 26px;\n  line-height: 26px;\n  font-size: 13px;\n}\n.tabTask-menu__manage[data-v-49a3fd3a] {\n  color: #d81e06;\n}\n.tabTask-menu__time[data-v-49a3fd3a] {\n  font-size: 14px;\n  float: right;\n}\n.tabTask-menu__close[data-v-49a3fd3a] {\n  display: block;\n  color: #000;\n  float: right;\n  cursor: pointer;\n  width: 15px;\n  height: 15px;\n  line-height: 16px;\n  text-align: center;\n  margin-top: 8px;\n  margin-left: 3px;\n}\n.tabTask-menu__close[data-v-49a3fd3a] :hover {\n  background: #d81e06;\n  color: #fff;\n  border-radius: 50%;\n}\n.tabTask-menu__refresh[data-v-49a3fd3a] {\n  /* width: 13px;\n      height: 13px; */\n  font-size: 13px;\n  cursor: pointer;\n  float: right;\n}\n.tabTask-menu__title1[data-v-49a3fd3a] {\n  background-color: #fff;\n  color: #42494f;\n  cursor: pointer;\n  font-family: 'PingFangSC-Medium';\n  margin-bottom: -1px;\n}\n.tabTask-menu__title2[data-v-49a3fd3a] {\n  background-color: #fff;\n  color: #42494f;\n  font-family: 'PingFangSC-Regular';\n}\n.tabTask-menu__icon[data-v-49a3fd3a] {\n  font-size: 26px;\n  -webkit-transition: all 0.3s;\n  -o-transition: all 0.3s;\n  transition: all 0.3s;\n  -webkit-transform: rotate(-90deg);\n  -ms-transform: rotate(-90deg);\n  transform: rotate(-90deg);\n  display: inline-block;\n  position: absolute;\n  top: 15%;\n  right: 12px;\n  margin-top: -7px;\n  color: #333333;\n}\n.tabTask-menu__down[data-v-49a3fd3a] {\n  display: inline-block;\n  margin: 0 5px;\n  margin-top: -5px;\n  -webkit-transition: all 0.3s;\n  -o-transition: all 0.3s;\n  transition: all 0.3s;\n}\n.tabTask-menu__iconf[data-v-49a3fd3a] {\n  display: inline-block;\n  vertical-align: middle;\n  margin-right: 5px;\n  width: 24px;\n  text-align: center;\n  font-size: 18px;\n}\n.fl[data-v-49a3fd3a] {\n  float: left;\n}\n.fr[data-v-49a3fd3a] {\n  float: right;\n}\n.text-center[data-v-49a3fd3a] {\n  text-align: center;\n}\n.tabTask-menu__title[data-v-49a3fd3a] {\n  text-align: center;\n  float: left;\n  width: 58px;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.menu-dropdown[data-v-49a3fd3a] {\n  z-index: 1000;\n  position: absolute;\n  top: 100%;\n  left: -58.5px;\n  padding: 10px 0;\n  margin: 5px 0;\n  background-color: #fff;\n  border: 1px solid #ebeef5;\n  border-radius: 4px;\n  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);\n}\n.menu-dropdown__item[data-v-49a3fd3a] {\n  list-style: none;\n  line-height: 36px;\n  padding: 0 10px;\n  margin: 0;\n  font-size: 14px;\n  color: #606266;\n  cursor: pointer;\n  outline: 0;\n  overflow: hidden;\n}\n.menu-dropdown__item[data-v-49a3fd3a]:hover {\n  background: #ecf5ff;\n}\n.menu-dropdown__item-line[data-v-49a3fd3a] {\n  width: 100%;\n  height: 1px;\n  background: #ebeef5;\n  margin: 6px 0;\n}\n.menu-dropdown__arrow[data-v-49a3fd3a] {\n  width: 0;\n  height: 0;\n  overflow: hidden;\n  font-size: 0;\n  line-height: 0;\n  border-width: 5px;\n  border-style: solid dashed dashed dashed;\n  border-color: #ebeef5 transparent transparent transparent;\n  transform: rotate(180deg);\n  position: absolute;\n  top: -10px;\n  left: 50%;\n}\n.fade-enter-active[data-v-49a3fd3a], .fade-leave-active[data-v-49a3fd3a] {\n  transition: opacity .3s;\n}\n.fade-enter[data-v-49a3fd3a], .fade-leave-to[data-v-49a3fd3a] {\n  opacity: 0;\n}\n.tabTask-menu__util[data-v-49a3fd3a] {\n  float: right;\n  line-break: 26px;\n}\n", map: undefined, media: undefined }), inject("data-v-49a3fd3a_1", { source: "\n@font-face {font-family: \"dmw-icon\";\n  src: url('iconfont.eot?t=1532589439741'); /* IE9*/\n  src: url('iconfont.eot?t=1532589439741#iefix') format('embedded-opentype'), /* IE6-IE8 */\n  url('data:application/x-font-woff;charset=utf-8;base64,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') format('woff'),\n  url('iconfont.ttf?t=1532589439741') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/\n  url('iconfont.svg?t=1532589439741#dmw-icon') format('svg'); /* iOS 4.1- */\n}\n.dmw-icon {\n  font-family:\"dmw-icon\" !important;\n  font-size:16px;\n  font-style:normal;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n.icon-add:before { content: \"\\e60a\";\n}\n.icon-remove:before { content: \"\\e64a\";\n}\n.icon-close:before { content: \"\\e603\";\n}\n.icon-refresh:before { content: \"\\e6dd\";\n}\n.icon-down-arrow:before { content: \"\\ea1a\";\n}\n.icon-new-window:before { content: \"\\e86c\";\n}\n\n", map: undefined, media: undefined });
-
-  };
+  var __vue_inject_styles__ = undefined;
   /* scoped */
-  var __vue_scope_id__ = "data-v-49a3fd3a";
+  var __vue_scope_id__ = undefined;
   /* module identifier */
   var __vue_module_identifier__ = undefined;
   /* functional template */
@@ -1263,29 +1298,7 @@ __vue_render__._withStripped = true;
 
     component._scopeId = scope;
 
-    {
-      var hook;
-      if (style) {
-        hook = function(context) {
-          style.call(this, createInjector(context));
-        };
-      }
-
-      if (hook !== undefined) {
-        if (component.functional) {
-          // register for functional component in vue file
-          var originalRender = component.render;
-          component.render = function renderWithStyleInjection(h, context) {
-            hook.call(context);
-            return originalRender(h, context)
-          };
-        } else {
-          // inject component registration as beforeCreate hook
-          var existing = component.beforeCreate;
-          component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
-        }
-      }
-    }
+    
 
     return component
   }
@@ -1350,7 +1363,7 @@ __vue_render__._withStripped = true;
   
 
   
-  var Task = __vue_normalize__(
+  var TaskComponent = __vue_normalize__(
     { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
     __vue_inject_styles__,
     __vue_script__,
@@ -1486,7 +1499,7 @@ function taskChildren (h) {
           'process-id': pid,
           'ddv-multi-window-type': 'taskBox'
         }
-      }), [taskChildrenRender.call(this$1, h, task)])
+      }), taskChildrenRender.call(this$1, h, task))
     ])
   })
 }
@@ -1541,24 +1554,19 @@ function taskChildrenRender (h, task) {
     process: this.process,
     handleTask: this.handleTask
   };
+  var children = [];
   if (this.$scopedSlots && this.$scopedSlots.task) {
-    return this.$scopedSlots.task(props)
-  } else if (this.$slots && this.$slots.task.length) {
-    this.$slots.task[0].data.props = props;
-    console.log(this.$slots.task, 89, h('div', { props: props }));
-    return [this.$slots.task]
+    children.push(this.$scopedSlots.task(props));
+  } else {
+    children.push(h(TaskComponent, {
+      key: 'task',
+      attrs: {
+        'ddv-multi-window-type': 'taskContent'
+      },
+      props: props
+    }));
   }
-  var task1 = (this.$slots && this.$slots.task.length) ? this.$slots.task : h('div');
-  return [task1]
-
-  /* return this.taskIds.map(pid => {
-    const task = this.process[pid]
-    // 判断该进程id是否是 一个有视图的进程
-    if (!task || !task.isTask) {
-      // 既然没有视图，不需要渲染
-      return
-    }
-  }) */
+  return children
 }
 function viewChildren (h) {
   var this$1 = this;
@@ -1891,12 +1899,6 @@ var api = {
   }
 }
 
-var util$1 = require('ddv-auth/util');
-
-function createNewPid (params) {
-  return util$1.createNewPid()
-}
-
 var apiUtil = {
   methods: {
     // 参数运行函数
@@ -2088,6 +2090,7 @@ var apiUtil = {
 
 var apiProps = {
   props: {
+    // 守护进程的id
     daemonId: {
       type: [Number, String],
       default: 'daemon'
@@ -2467,30 +2470,10 @@ var apiAction = {
       options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow;
 
       // 把值为undefined使用后面的对象的默认值
-      unDefDefaultByObj(options, {
-        // 路径
-        src: '/',
-        // 标题
-        // title: 'New window',
-        // 是否可以关闭
-        closable: true,
-        // 是否可以刷新
-        refreshable: false,
-        // 是否正在移除中
-        removeing: false,
-        // 窗口
-        contentWindow: null,
-        // 视图的 可拖动的dom，是一个属性不变的jquery dom - 注意，不能去改变属性，避免vue重新渲染
-        $content: null,
-        // iframe 的 jquery
-        $iframe: null,
-        // 视图的 父层 jquery dom 不会改变，第一次的父层 - 注意，不能去改变属性，避免vue重新渲染
-        $parent: null,
-        // 注入到那个具体窗口的容器
-        $mainWrap: {},
-        // 组件
-        component: null
-      });
+      unDefDefaultByObj(Object.assign(options, {
+        // 守护进程id
+        daemonId: this.daemonId
+      }), opts);
 
       // 标题
       options.title = options.title || ("新窗口[id:" + (options.id) + "]");
@@ -2550,7 +2533,7 @@ var apiAction = {
         return Promise.reject(new Error('this window is not found'))
       }
 
-      if (process.refreshable === true) {
+      if (process.refreshable === false) {
         return Promise.reject(new Error('this window does not support refresh'))
       }
 
@@ -2960,6 +2943,7 @@ var tabRouter = {
       var router = Object.create(null);
 
       Object.assign(router, tabRouter$1, {
+        daemonApp: this,
         $parentRouter: this.$router,
         process: process,
         options: this.$router.options
@@ -2977,12 +2961,17 @@ var tabRouter$1 = {
   },
   init: function init (vm, a, b) {
     vm._route = this.process.route;
-    this.$ddvMultiWindow = vm.$ddvMultiWindow;
+    this.$vm = vm;
     this.history = {};
     this.history.current = this.process.route;
   },
   push: function push (location, onComplete, onAbort) {
-    this.$ddvMultiWindow.open(location);
+    if (this.$vm.$ddvMultiWindow) {
+      this.$vm.$ddvMultiWindow.open(location);
+    } else {
+      return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
+        .then(function (ddvMultiWindow) { return ddvMultiWindow.open(location); })
+    }
     // this.$parentRouter.push('/#44')
   },
   replace: function replace (location, onComplete, onAbort) {
@@ -3348,6 +3337,18 @@ var MasterView = {
   }
 }
 
+function getDdvMultiWindowByParent (parent) {
+  parent = parent || this;
+  if (parent && parent._ddvMultiWindow) {
+    return parent._ddvMultiWindow
+  }
+  if (parent && parent.$parent) {
+    return getDdvMultiWindowByParent(parent.$parent)
+  } else {
+    return null
+  }
+}
+
 var _Vue;
 var DdvMultiWindowGlobal = function DdvMultiWindowGlobal () {
   this.Vue = null;
@@ -3364,7 +3365,7 @@ DdvMultiWindowGlobal.prototype.masterInit = function masterInit (app) {
   if (!app) {
     throw getError('必须传入app实例')
   }
-  var ddvMultiWindow = getParent(app);
+  var ddvMultiWindow = getDdvMultiWindowByParent(app);
   if (ddvMultiWindow) {
     return Promise.resolve(ddvMultiWindow)
   }
@@ -3526,7 +3527,7 @@ DdvMultiWindowGlobal.prototype.hookInstall = function hookInstall (Vue) {
 };
 DdvMultiWindowGlobal.prototype.componentInstall = function componentInstall (Vue) {
   // 安装组件
-  Vue.component(Task.name, Task);
+  Vue.component(TaskComponent.name, TaskComponent);
   Vue.component(Daemon.name, Daemon);
   Vue.component(button.name, button);
   Vue.component(master.name, master);
@@ -3550,10 +3551,13 @@ DdvMultiWindowGlobal.prototype.VuePrototypeInstall = function VuePrototypeInstal
 
   Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get: function get () {
-      if (this._ddvMultiWindow) {
-        return this._ddvMultiWindow
+      if (!this._ddvMultiWindow) {
+        this._ddvMultiWindow = getDdvMultiWindowByParent(this);
+      }
+      if (!this._ddvMultiWindow) {
+        throw getError('Not initialized')
       } else {
-        throw getError('多窗口没有初始化')
+        return this._ddvMultiWindow
       }
     }
   });
@@ -3573,23 +3577,12 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.1'
+  version: '0.1.0'
 });
 globalInit(g);
 
 if (inBrowser && window.Vue) {
   window.Vue.use(DdvMultiWindow);
-}
-function getParent (parent) {
-  parent = parent || this;
-  if (parent && parent._ddvMultiWindow) {
-    return parent._ddvMultiWindow
-  }
-  if (parent && parent.$parent) {
-    return getParent(parent.$parent)
-  } else {
-    return null
-  }
 }
 function registerInstance (vm, callVal) {
   var i = vm.$options._parentVnode;
@@ -3599,5 +3592,5 @@ function registerInstance (vm, callVal) {
 }
 
 export default g;
-export { _Vue, DdvMultiWindowGlobal, getParent, Ready, EventMessageWindow };
+export { _Vue, DdvMultiWindowGlobal, getDdvMultiWindowByParent, Ready, EventMessageWindow };
 //# sourceMappingURL=ddv-multi-window.esm.js.map

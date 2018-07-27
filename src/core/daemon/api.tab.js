@@ -3,7 +3,7 @@ import { openWindow } from '../../util/window'
 import removeArray from '../../util/remove-array'
 export default {
   methods: {
-    // 切换窗口
+    // 切换激活窗口
     tabToWindow (pid) {
       if (!this.isHasId(pid)) {
         return Promise.reject(getError('窗口不存在'))
@@ -21,9 +21,14 @@ export default {
     // 切换窗口
     tabToLastWindowByTaskId (taskId) {
       var task = this.process[taskId || 'daemon']
+      if (taskId !== 'daemon' && !(task.pids && task.pids.length)) {
+        // 如果不是主进程，而且任务栏没有任务了就关闭窗口
+        return this.closeMasterWindow(taskId, 0) || Promise.resolve()
+      }
       // 获取上一个历史的id
       return task && task.history[0] && this.tabToWindow(task.history[0])
     },
+    // 把指定 id窗口 切换到指定任务栏
     tabMoveMasterWindow ({ taskId, id }) {
       this.regTask(taskId)
       this.addTask({ taskId, id })

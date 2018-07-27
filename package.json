@@ -1,6 +1,6 @@
 {
   "name": "ddv-multi-window",
-  "version": "0.1.2",
+  "version": "0.1.0",
   "description": "multi window for Vue.js 2",
   "author": "yuchonghua",
   "license": "MIT",
@@ -15,8 +15,8 @@
   },
   "typings": "types/index.d.ts",
   "files": [
-    "src/*.js",
-    "dist/*.js",
+    "dist",
+    "src",
     "types/*.d.ts"
   ],
   "keywords": [
@@ -71,6 +71,7 @@
     "rollup-plugin-commonjs": "^9.0.0",
     "rollup-plugin-flow-no-whitespace": "^1.0.0",
     "rollup-plugin-node-resolve": "^3.0.3",
+    "rollup-plugin-postcss": "^1.6.2",
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-vue": "^4.3.1",
     "rollup-watch": "^4.0.0",
@@ -90,7 +91,6 @@
   },
   "homepage": "https://github.com/ddvjs/ddv-multi-window#readme",
   "dependencies": {
-    "ddv-auth": "0.0.9",
     "jquery": "^3.3.1"
   }
 }
