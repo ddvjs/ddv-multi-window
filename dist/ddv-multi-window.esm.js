@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.0
+  * ddv-multi-window v0.1.3
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -1601,7 +1601,7 @@ function viewChildren (h) {
       })));
     } else if (process.mode === 'component') {
       if (process.component) {
-      // 视图模式 为 vue 组件视图
+        // 视图模式 为 vue 组件视图
         children.push(h(process.component, cloneRenderOptions(this$1.renderOptions.viewComponent, {
           props: {
           }
@@ -2055,44 +2055,6 @@ var apiUtil = {
       var this$1 = this;
 
       return new Promise(function (resolve, reject) { return this$1.$router.onReady(resolve, reject); })
-    },
-    loadComponent: function loadComponent (pid) {
-      var this$1 = this;
-
-      var process = this.process[pid];
-      // 判断该进程id是否是 一个有视图的进程
-      if (!process || !process.isHasView) {
-        // 既然没有视图，不需要渲染
-        return Promise.reject(getError('不支持显示'))
-      }
-      if (process.mode !== 'component') {
-        return Promise.reject(getError('不支持加载'))
-      }
-
-      process.error = null;
-      return this.routerReady()
-        .then(function () { return (this$1.$router.getMatchedComponents(process.src)); })
-        .then(function (matchedComponents) {
-          // 没有页码
-          if (!matchedComponents.length) {
-            var e = new Error('404');
-            e.statusCode = 404;
-            return Promise.reject(e)
-          }
-          return Promise.all(matchedComponents.map(function (Component) {
-            return Component()
-          }))
-        })
-        .then(function (components) {
-          // 窗口新的空组件
-          process.component = Object.create(components[0]);
-          // 注入路由
-          process.component.router = this$1.loadComponentRouter(process, process.component);
-        })
-        .catch(function (e) {
-          // 报错
-          process.error = e;
-        })
     }
   }
 }
@@ -2396,7 +2358,7 @@ function openDefaultData () {
     // 是否可以关闭
     closable: true,
     // 是否可以刷新
-    refreshable: false,
+    refreshable: true,
     // 是否正在移除中
     removeing: false,
     // 窗口
@@ -2409,9 +2371,51 @@ function openDefaultData () {
     $parent: null,
     // 注入到那个具体窗口的容器
     $mainWrap: {},
+    hook: {
+      beforeRefresh: []
+    },
     // 组件
     component: null
   }
+}
+
+var encodeReserveRE = /[!'()*]/g;
+var encodeReserveReplacer = function (c) { return '%' + c.charCodeAt(0).toString(16); };
+var commaRE = /%2C/g;
+var encode = function (str) { return encodeURIComponent(str)
+  .replace(encodeReserveRE, encodeReserveReplacer)
+  .replace(commaRE, ','); };
+
+function stringifyQuery (obj) {
+  var res = obj ? Object.keys(obj).map(function (key) {
+    var val = obj[key];
+
+    if (val === undefined) {
+      return ''
+    }
+
+    if (val === null) {
+      return encode(key)
+    }
+
+    if (Array.isArray(val)) {
+      var result = [];
+      val.forEach(function (val2) {
+        if (val2 === undefined) {
+          return
+        }
+        if (val2 === null) {
+          result.push(encode(key));
+        } else {
+          result.push(encode(key) + '=' + encode(val2));
+        }
+      });
+      return result.join('&')
+    }
+
+    return encode(key) + '=' + encode(val)
+  }).filter(function (x) { return x.length > 0; }).join('&') : null;
+  return res ? ("?" + res) : ''
 }
 
 var apiAction = {
@@ -2431,6 +2435,14 @@ var apiAction = {
         };
       } else if (typeof input === 'object') {
         // 支持path和query
+        if (!input.src && input.path) {
+          var src = input.path;
+
+          if (input.query) {
+            src += stringifyQuery(input.query);
+          }
+          input.src = src;
+        }
         // 遍历属性
         Object.keys(opts).forEach(function (key) {
           if (Object.hasOwnProperty.call(input, key)) {
@@ -2554,7 +2566,10 @@ var apiAction = {
 
       if (process.mode === 'component') {
         if (process.component) {
-          process.component.reload();
+          // console.log(process, process.hook.beforeRefresh[0]())
+          //
+          process.component = null;
+          // process.component.reload()
         }
       } else if (process.mode === 'iframe') {
         return this.getWindowByPid(id)
@@ -2954,6 +2969,46 @@ function registerHook (list, fn) {
 
 var tabRouter = {
   methods: {
+    loadComponent: function loadComponent (pid) {
+      var this$1 = this;
+
+      var process = this.process[pid];
+      // 判断该进程id是否是 一个有视图的进程
+      if (!process || !process.isHasView) {
+        // 既然没有视图，不需要渲染
+        return throwError('不支持显示')
+      }
+      if (process.mode !== 'component') {
+        return throwError('不支持加载')
+      }
+
+      process.error = null;
+      return this.routerReady()
+        .then(function () { return (this$1.$router.getMatchedComponents(process.src)); })
+        .then(function (matchedComponents) {
+          // 没有页码
+          if (!matchedComponents.length) {
+            var e = new Error('404');
+            e.statusCode = 404;
+            return Promise.reject(e)
+          }
+          return Promise.all(matchedComponents.map(function (Component) {
+            return Component()
+          }))
+        })
+        .then(function (components) {
+          // 窗口新的空组件
+          process.component = Object.create(components[0]);
+          // 注入 process 数据
+          process.component.process = process;
+          // 注入路由
+          process.component.router = this$1.loadComponentRouter(process, process.component);
+        })
+        .catch(function (e) {
+          // 报错
+          process.error = e;
+        })
+    },
     loadComponentRouter: function loadComponentRouter (process, component) {
       var router = Object.create(null);
 
@@ -3352,13 +3407,13 @@ var MasterView = {
   }
 }
 
-function getDdvMultiWindowByParent (parent) {
+function getByParent (parent, key) {
   parent = parent || this;
-  if (parent && parent._ddvMultiWindow) {
-    return parent._ddvMultiWindow
+  if (parent && parent[key]) {
+    return parent[key]
   }
   if (parent && parent.$parent) {
-    return getDdvMultiWindowByParent(parent.$parent)
+    return getByParent(parent.$parent, key)
   } else {
     return null
   }
@@ -3380,7 +3435,7 @@ DdvMultiWindowGlobal.prototype.masterInit = function masterInit (app) {
   if (!app) {
     throw getError('必须传入app实例')
   }
-  var ddvMultiWindow = getDdvMultiWindowByParent(app);
+  var ddvMultiWindow = getByParent(app, '_ddvMultiWindow');
   if (ddvMultiWindow) {
     return Promise.resolve(ddvMultiWindow)
   }
@@ -3553,10 +3608,34 @@ DdvMultiWindowGlobal.prototype.componentInstall = function componentInstall (Vue
 DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstanceInstall (Vue) {
   this.Vue.mixin({
     beforeCreate: function beforeCreate () {
-      this._ddvMultiWindow = (this.$parent && this.$parent._ddvMultiWindow) || void 0;
+        var this$1 = this;
+
+      this._ddvProcess = this.$options.process;
+      if (!this._ddvProcess) {
+        this._ddvProcess = getByParent(this.$parent, '_ddvProcess');
+      }
+      if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
+        this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
+      }
+      // , this.process, this.$options
+      this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
+
+      if (!this._ddvMultiWindow && this._ddvProcess) {
+        this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
+          .then(function (ddvMultiWindow) {
+            this$1._ddvMultiWindow = ddvMultiWindow;
+          });
+      }
       registerInstance(this, this);
     },
+    created: function created () {
+    },
     destroyed: function destroyed () {
+      // this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
+      // return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+      // })
+
+      // this._ddvProcess.hook.beforeRefresh.length && console.log(9, this._ddvProcess.hook.beforeRefresh)
       registerInstance(this);
     }
   });
@@ -3567,7 +3646,7 @@ DdvMultiWindowGlobal.prototype.VuePrototypeInstall = function VuePrototypeInstal
   Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get: function get () {
       if (!this._ddvMultiWindow) {
-        this._ddvMultiWindow = getDdvMultiWindowByParent(this);
+        this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow');
       }
       if (!this._ddvMultiWindow) {
         throw getError('Not initialized')
@@ -3592,7 +3671,7 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.0'
+  version: '0.1.3'
 });
 globalInit(g);
 
@@ -3607,4 +3686,4 @@ function registerInstance (vm, callVal) {
 }
 
 export default g;
-export { _Vue, DdvMultiWindowGlobal, getDdvMultiWindowByParent, Ready, EventMessageWindow };
+export { _Vue, DdvMultiWindowGlobal, Ready, EventMessageWindow };
