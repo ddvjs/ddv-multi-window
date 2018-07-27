@@ -364,5 +364,3 @@ export default {
   }
 }
 </script>
-<style scoped src="../assets/style/task.css"></style>
-<style src="../assets/iconfont/iconfont.css"></style>

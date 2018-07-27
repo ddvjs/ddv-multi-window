@@ -2400,7 +2400,7 @@ function openDefaultData () {
 var apiAction = {
   methods: {
     open: function open (input, taskId) {
-      var d = openDefaultData();
+      var opts = openDefaultData();
       // 构建配置选项
       var options = Object.create(null);
       // 如果传入参数是一个字符串
@@ -2414,7 +2414,7 @@ var apiAction = {
         };
       } else if (typeof input === 'object') {
         // 遍历属性
-        Object.keys(d).forEach(function (key) {
+        Object.keys(opts).forEach(function (key) {
           if (Object.hasOwnProperty.call(input, key)) {
           // 复制属性
             options[key] = input[key];
@@ -2432,7 +2432,6 @@ var apiAction = {
         }
         // 找到组件
         if (matchedComponents.length) {
-          console.log(8888, this.$router);
           // 获取目标路由信息
           var ref = this.$router.resolve(options.src);
           var route = ref.route;
@@ -2441,16 +2440,19 @@ var apiAction = {
           options.route = route;
         }
       } else if (typeof input === 'object') {
-        console.log(9999, this.$router);
         // 获取目标路由信息
-        var ref$1 = this.$router.resolve('admin/home');
+        var ref$1 = this.$router.resolve(input.src);
         var route$1 = ref$1.route;
         var href$1 = ref$1.href;
         options.src = href$1;
         options.route = route$1;
       }
 
-      input.taskId = input.taskId || taskId;
+      if (typeof input === 'object') {
+        options.taskId = input.taskId || taskId;
+      } else {
+        options.taskId = options.taskId || taskId;
+      }
       // 窗口类型
       options.mode = options.mode || 'iframe';
       // 创建窗口id
@@ -2463,12 +2465,13 @@ var apiAction = {
       options.isHasTask = this.modeNotTasks.indexOf(options.mode) === -1;
       // 是否有浏览器的全局窗口对象
       options.hasContentWindow = typeof options.hasContentWindow === 'undefined' ? ['iframe', 'daemon', 'master'].indexOf(options.mode) > -1 : options.hasContentWindow;
+
       // 把值为undefined使用后面的对象的默认值
       unDefDefaultByObj(options, {
         // 路径
         src: '/',
         // 标题
-        title: 'New window',
+        // title: 'New window',
         // 是否可以关闭
         closable: true,
         // 是否可以刷新
@@ -2488,6 +2491,7 @@ var apiAction = {
         // 组件
         component: null
       });
+
       // 标题
       options.title = options.title || ("新窗口[id:" + (options.id) + "]");
       // 判断一下 - 如果打开的窗口类型需要任务栏的，并且任务栏中找不到任务栏id
@@ -2966,10 +2970,10 @@ var tabRouter = {
 }
 var tabRouter$1 = {
   resolve: function resolve () {
-    var a = [], len = arguments.length;
-    while ( len-- ) a[ len ] = arguments[ len ];
+    var opts = [], len = arguments.length;
+    while ( len-- ) opts[ len ] = arguments[ len ];
 
-    return this.$parentRouter.resolve.apply(this.$parentRouter, a)
+    return this.$parentRouter.resolve.apply(this.$parentRouter, opts)
   },
   init: function init (vm, a, b) {
     vm._route = this.process.route;
@@ -3030,6 +3034,9 @@ var button = {
     event: {
       type: [String, Array],
       default: 'click'
+    },
+    title: {
+      type: String
     }
   },
   data: function data () {
@@ -3073,6 +3080,10 @@ var button = {
         var options = cloneRenderOptions(typeof this.to === 'string' ? { src: this.to } : clone(this.to), {
           taskId: taskId
         });
+
+        if (this.title) {
+          options.title = this.title;
+        }
         if (this.ddvMultiWindowReady) {
           this.comply(options);
         } else {

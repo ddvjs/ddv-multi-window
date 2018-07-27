@@ -26,6 +26,9 @@ export default {
     event: {
       type: [String, Array],
       default: 'click'
+    },
+    title: {
+      type: String
     }
   },
   data () {
@@ -63,6 +66,10 @@ export default {
         const options = cloneRenderOptions(typeof this.to === 'string' ? { src: this.to } : clone(this.to), {
           taskId
         })
+
+        if (this.title) {
+          options.title = this.title
+        }
         if (this.ddvMultiWindowReady) {
           this.comply(options)
         } else {
