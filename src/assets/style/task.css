@@ -67,7 +67,7 @@ ul, li {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 30px;
-  max-width: 86px;
+  max-width: 75px;
 }
 .tabTask-menu__ul {
   padding: 6px 0 0 20px;
