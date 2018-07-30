@@ -1007,7 +1007,7 @@ var __vue_render__ = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("section", [
+  return _c("section", { staticClass: "tabTask" }, [
     _c("div", { staticClass: "tabTask-menu" }, [
       _c(
         "ul",
@@ -1044,8 +1044,8 @@ var __vue_render__ = function() {
                     key: id,
                     ref: "tabTask",
                     refInFor: true,
+                    staticClass: "tabTask-menu__li",
                     class: {
-                      "tabTask-menu__li": 1,
                       "tabTask-menu__linow": id === _vm.activeId
                     },
                     attrs: { processid: id, draggable: "true" },
