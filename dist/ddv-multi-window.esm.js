@@ -2566,10 +2566,20 @@ var apiAction = {
 
       if (process.mode === 'component') {
         if (process.component) {
-          // console.log(process, process.hook.beforeRefresh[0]())
-          //
+          if (Array.isArray(process.hook.beforeRefresh)) {
+            for (var i = 0; i < process.hook.beforeRefresh.length; i++) {
+              var fn = process.hook.beforeRefresh[i];
+
+              if (isFunction(fn)) {
+                var res = fn();
+
+                if (res === false) {
+                  return Promise.resolve()
+                }
+              }
+            }
+          }
           process.component = null;
-          // process.component.reload()
         }
       } else if (process.mode === 'iframe') {
         return this.getWindowByPid(id)
@@ -3638,7 +3648,6 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
         this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
           return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
         });
-        console.log(555, this._ddvProcess.hook.beforeRefresh);
       }
 
       registerInstance(this);

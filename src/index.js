@@ -228,7 +228,6 @@ export class DdvMultiWindowGlobal {
           this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
             return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
           })
-          console.log(555, this._ddvProcess.hook.beforeRefresh)
         }
 
         registerInstance(this)

@@ -3,6 +3,7 @@ import { unDefDefaultByObj } from '../../util/is-def'
 import removeArray from '../../util/remove-array'
 import openDefaultData from '../../util/open-default-data'
 import stringifyQuery from '../../util/stringify-query'
+import isFunction from '../../util/is-function'
 
 export default {
   methods: {
@@ -146,10 +147,20 @@ export default {
 
       if (process.mode === 'component') {
         if (process.component) {
-          // console.log(process, process.hook.beforeRefresh[0]())
-          //
+          if (Array.isArray(process.hook.beforeRefresh)) {
+            for (let i = 0; i < process.hook.beforeRefresh.length; i++) {
+              const fn = process.hook.beforeRefresh[i]
+
+              if (isFunction(fn)) {
+                const res = fn()
+
+                if (res === false) {
+                  return Promise.resolve()
+                }
+              }
+            }
+          }
           process.component = null
-          // process.component.reload()
         }
       } else if (process.mode === 'iframe') {
         return this.getWindowByPid(id)
