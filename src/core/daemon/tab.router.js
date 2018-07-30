@@ -36,7 +36,6 @@ export default {
           // 注入路由
           process.component.router = this.loadComponentRouter(process, process.component)
           // 兼容nuxt的asyncData方法
-          // console.log(551, this.$ddvUtil.$context)
           // if (typeof components[0].asyncData === 'function') {
           //   console.log(5522)
           //   const res = components[0].asyncData({

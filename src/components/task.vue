@@ -28,14 +28,16 @@
           @dragend.stop="($event) => handleTabDragEnd($event, id)"
         >
           <div class="tabTask-menu__item">{{process[id].title}}</div>
-          <div v-if="process[id].closable!==false" class="tabTask-menu__close" @click="handleTask($event, 'remove', id)">
-            <i class="dmw-icon icon-close f14"></i>
-          </div>
-          <div v-if="process[id].refreshable!==false" class="fr tabTask-menu__refresh" @click="handleTask($event, 'refresh', id)">
-            <i class="dmw-icon icon-refresh f14"></i>
-          </div>
-          <div class="fr tabTask-menu__refresh" @click.stop="handleTask($event, 'openMasterWindow', id)">
-            <i class="dmw-icon icon-new-window f14"></i>
+          <div class="tabTask-menu__handle">
+            <div class="inline-block" @click.stop="handleTask($event, 'openMasterWindow', id)">
+              <i class="dmw-icon icon-new-window f14"></i>
+            </div>
+            <div v-if="process[id].refreshable!==false" class="inline-block" @click="handleTask($event, 'refresh', id)">
+              <i class="dmw-icon icon-refresh f14"></i>
+            </div>
+            <div v-if="process[id].closable!==false" class="inline-block" @click="handleTask($event, 'remove', id)">
+              <i class="dmw-icon icon-close f14"></i>
+            </div>
           </div>
         </li>
         <li

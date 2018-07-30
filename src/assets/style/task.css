@@ -46,7 +46,8 @@ ul, li {
   width: auto;
   height: 32px;
   line-height: 32px;
-  padding: 0 10px;
+  padding-left: 10px;
+  padding-right: 73px;
   margin-left: 5px;
   font-family: 'PingFangSC-Medium';
   -webkit-box-flex: 1;
@@ -56,18 +57,17 @@ ul, li {
   min-width: 120px;
   margin-top: 1px;
   cursor: default;
+  position: relative;
 }
 .transition {
   transition: all 0.3s;
 }
 .tabTask-menu__item {
-  float: left;
   overflow: hidden;
   -o-text-overflow: ellipsis;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 30px;
-  max-width: 75px;
+  width: 100%;
 }
 .tabTask-menu__ul {
   padding: 6px 0 0 20px;
@@ -128,30 +128,7 @@ ul, li {
   font-size: 14px;
   float: right;
 }
-.tabTask-menu__close {
-  display: block;
-  color: #000;
-  float: right;
-  cursor: pointer;
-  width: 15px;
-  height: 15px;
-  line-height: 16px;
-  text-align: center;
-  margin-top: 8px;
-  margin-left: 3px;
-}
-.tabTask-menu__close :hover {
-  background: #d81e06;
-  color: #fff;
-  border-radius: 50%;
-}
-.tabTask-menu__refresh {
-  /* width: 13px;
-      height: 13px; */
-  font-size: 13px;
-  cursor: pointer;
-  float: right;
-}
+
 .tabTask-menu__title1 {
   background-color: #fff;
   color: #42494f;
@@ -268,4 +245,18 @@ ul, li {
 .tabTask-menu__util {
   float: right;
   line-break: 26px;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.tabTask-menu__handle {
+  float: right;
+  width: 63px;
+  overflow: hidden;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 10px
 }

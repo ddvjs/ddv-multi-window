@@ -1081,53 +1081,63 @@ var __vue_render__ = function() {
                       _vm._v(_vm._s(_vm.process[id].title))
                     ]),
                     _vm._v(" "),
-                    _vm.process[id].closable !== false
-                      ? _c(
-                          "div",
-                          {
-                            staticClass: "tabTask-menu__close",
-                            on: {
-                              click: function($event) {
-                                _vm.handleTask($event, "remove", id);
-                              }
+                    _c("div", { staticClass: "tabTask-menu__handle" }, [
+                      _c(
+                        "div",
+                        {
+                          staticClass: "inline-block",
+                          on: {
+                            click: function($event) {
+                              $event.stopPropagation();
+                              _vm.handleTask($event, "openMasterWindow", id);
                             }
-                          },
-                          [_c("i", { staticClass: "dmw-icon icon-close f14" })]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _vm.process[id].refreshable !== false
-                      ? _c(
-                          "div",
-                          {
-                            staticClass: "fr tabTask-menu__refresh",
-                            on: {
-                              click: function($event) {
-                                _vm.handleTask($event, "refresh", id);
-                              }
-                            }
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "dmw-icon icon-refresh f14"
-                            })
-                          ]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass: "fr tabTask-menu__refresh",
-                        on: {
-                          click: function($event) {
-                            $event.stopPropagation();
-                            _vm.handleTask($event, "openMasterWindow", id);
                           }
-                        }
-                      },
-                      [_c("i", { staticClass: "dmw-icon icon-new-window f14" })]
-                    )
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "dmw-icon icon-new-window f14"
+                          })
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _vm.process[id].refreshable !== false
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "inline-block",
+                              on: {
+                                click: function($event) {
+                                  _vm.handleTask($event, "refresh", id);
+                                }
+                              }
+                            },
+                            [
+                              _c("i", {
+                                staticClass: "dmw-icon icon-refresh f14"
+                              })
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.process[id].closable !== false
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "inline-block",
+                              on: {
+                                click: function($event) {
+                                  _vm.handleTask($event, "remove", id);
+                                }
+                              }
+                            },
+                            [
+                              _c("i", {
+                                staticClass: "dmw-icon icon-close f14"
+                              })
+                            ]
+                          )
+                        : _vm._e()
+                    ])
                   ]
                 )
               : _vm._e()
@@ -3015,7 +3025,6 @@ var tabRouter = {
           // 注入路由
           process.component.router = this$1.loadComponentRouter(process, process.component);
           // 兼容nuxt的asyncData方法
-          // console.log(551, this.$ddvUtil.$context)
           // if (typeof components[0].asyncData === 'function') {
           //   console.log(5522)
           //   const res = components[0].asyncData({
