@@ -17,7 +17,7 @@
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import ddvMultiWindow from 'ddv-multi-window'
-import '@/dist/style/ddv-multi-window.css'
+import '@/dist/style/ddv-multi-window.css?ww=1'
 
 Vue.use(ddvMultiWindow, { 'namespace': '__DDV_MULTI_WINDOW__' })
 Vue.use(ElementUI)

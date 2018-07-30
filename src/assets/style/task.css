@@ -1,12 +1,11 @@
-* {
+.tabTask * {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   padding: 0;
   margin: 0;
   border: 0
 }
-ul, li {
-	list-style: none;
-}
+
 .dmw-icon {
   display: inline-block;
   speak: none;
@@ -19,10 +18,10 @@ ul, li {
   margin: 0 2px;
 }
 .f12 {
-  font-size: 12px !important;  
+  font-size: 12px;
 }
 .f14 {
-  font-size: 14px !important;  
+  font-size: 14px;
 }
 .clearfix {
   *zoom: 1
@@ -58,6 +57,7 @@ ul, li {
   margin-top: 1px;
   cursor: default;
   position: relative;
+	list-style: none;
 }
 .transition {
   transition: all 0.3s;
@@ -70,6 +70,7 @@ ul, li {
   width: 100%;
 }
 .tabTask-menu__ul {
+	list-style: none;  
   padding: 6px 0 0 20px;
   width: 100%;
   display: -webkit-box;
@@ -253,7 +254,6 @@ ul, li {
 
 .tabTask-menu__handle {
   float: right;
-  width: 63px;
   overflow: hidden;
   height: 100%;
   position: absolute;

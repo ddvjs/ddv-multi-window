@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section class="tabTask">
     <!-- tab栏 -->
     <div class="tabTask-menu">
       <ul
@@ -11,8 +11,8 @@
         >
         <li
           ref="tabTask"
+          class="tabTask-menu__li"
           :class="{
-            'tabTask-menu__li': 1,
             'tabTask-menu__linow': id === activeId
           }"
           :key="id"
@@ -82,6 +82,9 @@
 <script>
 import ref$ from '../util/ref-to-jquery'
 import removeArray from '../util/remove-array'
+
+import '../assets/style/task.css'
+import '../assets/style/iconfont.css'
 
 export default {
   name: 'ddv-multi-window-task-template',
