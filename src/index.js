@@ -9,10 +9,9 @@ import Master from './components/master'
 import DmwButton from './components/dmw-button'
 import MasterTask from './components/master-task'
 import MasterView from './components/master-view'
-import { isDef } from './util/is-def'
-import { assert, warn } from './util/warn'
+import { isDef, unDefDefaultByObj } from './util/is-def'
+import { warn } from './util/warn'
 import getError, { throwError } from './util/get-error'
-import { unDefDefaultByObj } from './util/is-def'
 import { getWindow, getDaemonWindow } from './util/window'
 import getByParent from './util/get-by-parent'
 export let _Vue
@@ -204,13 +203,14 @@ export class DdvMultiWindowGlobal {
     this.Vue.mixin({
       beforeCreate () {
         this._ddvProcess = this.$options.process
+
         if (!this._ddvProcess) {
           this._ddvProcess = getByParent(this.$parent, '_ddvProcess')
         }
         if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
           this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh)
         }
-        // , this.process, this.$options
+
         this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow')
 
         if (!this._ddvMultiWindow && this._ddvProcess) {
@@ -224,11 +224,13 @@ export class DdvMultiWindowGlobal {
       created () {
       },
       destroyed () {
-        // this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
-        //   return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
-        // })
+        if (this._ddvProcess && this._ddvProcess.hook) {
+          this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
+            return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+          })
+          console.log(555, this._ddvProcess.hook.beforeRefresh)
+        }
 
-        // this._ddvProcess.hook.beforeRefresh.length && console.log(9, this._ddvProcess.hook.beforeRefresh)
         registerInstance(this)
       }
     })

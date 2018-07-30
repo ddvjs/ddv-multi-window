@@ -3611,13 +3611,14 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
         var this$1 = this;
 
       this._ddvProcess = this.$options.process;
+
       if (!this._ddvProcess) {
         this._ddvProcess = getByParent(this.$parent, '_ddvProcess');
       }
       if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
         this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
       }
-      // , this.process, this.$options
+
       this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
 
       if (!this._ddvMultiWindow && this._ddvProcess) {
@@ -3631,11 +3632,15 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
     created: function created () {
     },
     destroyed: function destroyed () {
-      // this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
-      // return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
-      // })
+        var this$1 = this;
 
-      // this._ddvProcess.hook.beforeRefresh.length && console.log(9, this._ddvProcess.hook.beforeRefresh)
+      if (this._ddvProcess && this._ddvProcess.hook) {
+        this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
+          return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+        });
+        console.log(555, this._ddvProcess.hook.beforeRefresh);
+      }
+
       registerInstance(this);
     }
   });
