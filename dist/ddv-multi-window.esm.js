@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.3
+  * ddv-multi-window v0.1.4
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -1001,7 +1001,7 @@ var __vue_render__ = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("section", [
+  return _c("section", { staticClass: "tabTask" }, [
     _c("div", { staticClass: "tabTask-menu" }, [
       _c(
         "ul",
@@ -1038,8 +1038,8 @@ var __vue_render__ = function() {
                     key: id,
                     ref: "tabTask",
                     refInFor: true,
+                    staticClass: "tabTask-menu__li",
                     class: {
-                      "tabTask-menu__li": 1,
                       "tabTask-menu__linow": id === _vm.activeId
                     },
                     attrs: { processid: id, draggable: "true" },
@@ -1081,53 +1081,63 @@ var __vue_render__ = function() {
                       _vm._v(_vm._s(_vm.process[id].title))
                     ]),
                     _vm._v(" "),
-                    _vm.process[id].closable !== false
-                      ? _c(
-                          "div",
-                          {
-                            staticClass: "tabTask-menu__close",
-                            on: {
-                              click: function($event) {
-                                _vm.handleTask($event, "remove", id);
-                              }
+                    _c("div", { staticClass: "tabTask-menu__handle" }, [
+                      _c(
+                        "div",
+                        {
+                          staticClass: "inline-block",
+                          on: {
+                            click: function($event) {
+                              $event.stopPropagation();
+                              _vm.handleTask($event, "openMasterWindow", id);
                             }
-                          },
-                          [_c("i", { staticClass: "dmw-icon icon-close f14" })]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _vm.process[id].refreshable !== false
-                      ? _c(
-                          "div",
-                          {
-                            staticClass: "fr tabTask-menu__refresh",
-                            on: {
-                              click: function($event) {
-                                _vm.handleTask($event, "refresh", id);
-                              }
-                            }
-                          },
-                          [
-                            _c("i", {
-                              staticClass: "dmw-icon icon-refresh f14"
-                            })
-                          ]
-                        )
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      {
-                        staticClass: "fr tabTask-menu__refresh",
-                        on: {
-                          click: function($event) {
-                            $event.stopPropagation();
-                            _vm.handleTask($event, "openMasterWindow", id);
                           }
-                        }
-                      },
-                      [_c("i", { staticClass: "dmw-icon icon-new-window f14" })]
-                    )
+                        },
+                        [
+                          _c("i", {
+                            staticClass: "dmw-icon icon-new-window f14"
+                          })
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _vm.process[id].refreshable !== false
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "inline-block",
+                              on: {
+                                click: function($event) {
+                                  _vm.handleTask($event, "refresh", id);
+                                }
+                              }
+                            },
+                            [
+                              _c("i", {
+                                staticClass: "dmw-icon icon-refresh f14"
+                              })
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.process[id].closable !== false
+                        ? _c(
+                            "div",
+                            {
+                              staticClass: "inline-block",
+                              on: {
+                                click: function($event) {
+                                  _vm.handleTask($event, "remove", id);
+                                }
+                              }
+                            },
+                            [
+                              _c("i", {
+                                staticClass: "dmw-icon icon-close f14"
+                              })
+                            ]
+                          )
+                        : _vm._e()
+                    ])
                   ]
                 )
               : _vm._e()
@@ -2566,10 +2576,20 @@ var apiAction = {
 
       if (process.mode === 'component') {
         if (process.component) {
-          // console.log(process, process.hook.beforeRefresh[0]())
-          //
+          if (Array.isArray(process.hook.beforeRefresh)) {
+            for (var i = 0; i < process.hook.beforeRefresh.length; i++) {
+              var fn = process.hook.beforeRefresh[i];
+
+              if (isFunction(fn)) {
+                var res = fn();
+
+                if (res === false) {
+                  return Promise.resolve()
+                }
+              }
+            }
+          }
           process.component = null;
-          // process.component.reload()
         }
       } else if (process.mode === 'iframe') {
         return this.getWindowByPid(id)
@@ -2999,12 +3019,32 @@ var tabRouter = {
         .then(function (components) {
           // 窗口新的空组件
           process.component = Object.create(components[0]);
+
           // 注入 process 数据
           process.component.process = process;
           // 注入路由
           process.component.router = this$1.loadComponentRouter(process, process.component);
+          // 兼容nuxt的asyncData方法
+          // if (typeof components[0].asyncData === 'function') {
+          //   console.log(5522)
+          //   const res = components[0].asyncData({
+          //     params: process.route.params
+          //   })
+          //   console.log(552)
+          //   if (typeof res.then === 'function') {
+          //     console.log(553)
+          //     return res.then(asyncData => {
+          //       const ComponentData = process.component.data
+          //       process.component.data = function () {
+          //         const data = ComponentData.call(this)
+          //         return Object.assign({}, data, asyncData)
+          //       }
+          //     })
+          //   }
+          // }
         })
         .catch(function (e) {
+          console.log('e', e);
           // 报错
           process.error = e;
         })
@@ -3029,11 +3069,11 @@ var tabRouter$1 = {
 
     return this.$parentRouter.resolve.apply(this.$parentRouter, opts)
   },
-  init: function init (vm, a, b) {
+  init: function init (vm) {
     vm._route = this.process.route;
     this.$vm = vm;
     this.history = {};
-    this.history.current = this.process.route;
+    this.history.current = Object.assign({}, this.process.route);
   },
   push: function push (location, onComplete, onAbort) {
     if (this.$vm.$ddvMultiWindow) {
@@ -3042,10 +3082,9 @@ var tabRouter$1 = {
       return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
         .then(function (ddvMultiWindow) { return ddvMultiWindow.open(location); })
     }
-    // this.$parentRouter.push('/#44')
   },
   replace: function replace (location, onComplete, onAbort) {
-    console.log('location, onComplete, onAbort', location, onComplete, onAbort);
+    this.history.current = this.resolve(location).route;
   }
 };
 
@@ -3611,13 +3650,14 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
         var this$1 = this;
 
       this._ddvProcess = this.$options.process;
+
       if (!this._ddvProcess) {
         this._ddvProcess = getByParent(this.$parent, '_ddvProcess');
       }
       if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
         this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
       }
-      // , this.process, this.$options
+
       this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
 
       if (!this._ddvMultiWindow && this._ddvProcess) {
@@ -3631,11 +3671,14 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
     created: function created () {
     },
     destroyed: function destroyed () {
-      // this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
-      // return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
-      // })
+        var this$1 = this;
 
-      // this._ddvProcess.hook.beforeRefresh.length && console.log(9, this._ddvProcess.hook.beforeRefresh)
+      if (this._ddvProcess && this._ddvProcess.hook) {
+        this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
+          return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+        });
+      }
+
       registerInstance(this);
     }
   });
@@ -3671,7 +3714,7 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.3'
+  version: '0.1.4'
 });
 globalInit(g);
 
@@ -3687,3 +3730,4 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, Ready, EventMessageWindow };
+//# sourceMappingURL=ddv-multi-window.esm.js.map

@@ -1,12 +1,11 @@
-* {
+.tabTask * {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   padding: 0;
   margin: 0;
   border: 0
 }
-ul, li {
-	list-style: none;
-}
+
 .dmw-icon {
   display: inline-block;
   speak: none;
@@ -19,10 +18,10 @@ ul, li {
   margin: 0 2px;
 }
 .f12 {
-  font-size: 12px !important;  
+  font-size: 12px;
 }
 .f14 {
-  font-size: 14px !important;  
+  font-size: 14px;
 }
 .clearfix {
   *zoom: 1
@@ -46,7 +45,8 @@ ul, li {
   width: auto;
   height: 32px;
   line-height: 32px;
-  padding: 0 10px;
+  padding-left: 10px;
+  padding-right: 73px;
   margin-left: 5px;
   font-family: 'PingFangSC-Medium';
   -webkit-box-flex: 1;
@@ -56,20 +56,22 @@ ul, li {
   min-width: 120px;
   margin-top: 1px;
   cursor: default;
+  position: relative;
+	list-style: none;
+  cursor: pointer;
 }
 .transition {
   transition: all 0.3s;
 }
 .tabTask-menu__item {
-  float: left;
   overflow: hidden;
   -o-text-overflow: ellipsis;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 30px;
-  max-width: 86px;
+  width: 100%;
 }
 .tabTask-menu__ul {
+	list-style: none;  
   padding: 6px 0 0 20px;
   width: 100%;
   display: -webkit-box;
@@ -128,30 +130,7 @@ ul, li {
   font-size: 14px;
   float: right;
 }
-.tabTask-menu__close {
-  display: block;
-  color: #000;
-  float: right;
-  cursor: pointer;
-  width: 15px;
-  height: 15px;
-  line-height: 16px;
-  text-align: center;
-  margin-top: 8px;
-  margin-left: 3px;
-}
-.tabTask-menu__close :hover {
-  background: #d81e06;
-  color: #fff;
-  border-radius: 50%;
-}
-.tabTask-menu__refresh {
-  /* width: 13px;
-      height: 13px; */
-  font-size: 13px;
-  cursor: pointer;
-  float: right;
-}
+
 .tabTask-menu__title1 {
   background-color: #fff;
   color: #42494f;
@@ -268,4 +247,17 @@ ul, li {
 .tabTask-menu__util {
   float: right;
   line-break: 26px;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.tabTask-menu__handle {
+  float: right;
+  overflow: hidden;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 10px
 }

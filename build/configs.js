@@ -46,6 +46,7 @@ function genConfig (opts) {
         getDefault(vue)(),
         getDefault(postcss)(
           {
+            minimize: true,
             extract: resolve('dist/style/ddv-multi-window.css')
           }
         ),
