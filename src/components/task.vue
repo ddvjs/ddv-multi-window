@@ -83,9 +83,6 @@
 import ref$ from '../util/ref-to-jquery'
 import removeArray from '../util/remove-array'
 
-import '../assets/style/task.css'
-import '../assets/style/iconfont.css'
-
 export default {
   name: 'ddv-multi-window-task-template',
   props: {
