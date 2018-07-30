@@ -58,6 +58,7 @@
   cursor: default;
   position: relative;
 	list-style: none;
+  cursor: pointer;
 }
 .transition {
   transition: all 0.3s;
