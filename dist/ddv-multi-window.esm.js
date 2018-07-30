@@ -3009,12 +3009,33 @@ var tabRouter = {
         .then(function (components) {
           // 窗口新的空组件
           process.component = Object.create(components[0]);
+
           // 注入 process 数据
           process.component.process = process;
           // 注入路由
           process.component.router = this$1.loadComponentRouter(process, process.component);
+          // 兼容nuxt的asyncData方法
+          // console.log(551, this.$ddvUtil.$context)
+          // if (typeof components[0].asyncData === 'function') {
+          //   console.log(5522)
+          //   const res = components[0].asyncData({
+          //     params: process.route.params
+          //   })
+          //   console.log(552)
+          //   if (typeof res.then === 'function') {
+          //     console.log(553)
+          //     return res.then(asyncData => {
+          //       const ComponentData = process.component.data
+          //       process.component.data = function () {
+          //         const data = ComponentData.call(this)
+          //         return Object.assign({}, data, asyncData)
+          //       }
+          //     })
+          //   }
+          // }
         })
         .catch(function (e) {
+          console.log('e', e);
           // 报错
           process.error = e;
         })
@@ -3039,11 +3060,11 @@ var tabRouter$1 = {
 
     return this.$parentRouter.resolve.apply(this.$parentRouter, opts)
   },
-  init: function init (vm, a, b) {
+  init: function init (vm) {
     vm._route = this.process.route;
     this.$vm = vm;
     this.history = {};
-    this.history.current = this.process.route;
+    this.history.current = Object.assign({}, this.process.route);
   },
   push: function push (location, onComplete, onAbort) {
     if (this.$vm.$ddvMultiWindow) {
@@ -3052,10 +3073,9 @@ var tabRouter$1 = {
       return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
         .then(function (ddvMultiWindow) { return ddvMultiWindow.open(location); })
     }
-    // this.$parentRouter.push('/#44')
   },
   replace: function replace (location, onComplete, onAbort) {
-    console.log('location, onComplete, onAbort', location, onComplete, onAbort);
+    this.history.current = this.resolve(location).route;
   }
 };
 
