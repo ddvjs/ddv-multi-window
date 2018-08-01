@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.5
+  * ddv-multi-window v0.1.6
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -2385,7 +2385,8 @@ function openDefaultData () {
       beforeRefresh: []
     },
     // 组件
-    component: null
+    component: null,
+    id: null
   }
 }
 
@@ -2461,13 +2462,6 @@ var apiAction = {
           }
           options.options = input;
         });
-
-        // 获取目标路由信息
-        var ref = this.$router.resolve(input);
-        var route = ref.route;
-        var href = ref.href;
-        options.src = href;
-        options.route = route;
       }
 
       if (options.src) {
@@ -2481,12 +2475,19 @@ var apiAction = {
         // 找到组件
         if (matchedComponents.length) {
           // 获取目标路由信息
-          var ref$1 = this.$router.resolve(options.src);
-          var route$1 = ref$1.route;
-          var href$1 = ref$1.href;
-          options.src = href$1;
-          options.route = route$1;
+          var ref = this.$router.resolve(options.src);
+          var route = ref.route;
+          var href = ref.href;
+          options.src = href;
+          options.route = route;
         }
+      } else if (typeof input === 'object') {
+        // 获取目标路由信息
+        var ref$1 = this.$router.resolve(input);
+        var route$1 = ref$1.route;
+        var href$1 = ref$1.href;
+        options.src = href$1;
+        options.route = route$1;
       }
 
       if (typeof input === 'object') {
@@ -3715,7 +3716,7 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.5'
+  version: '0.1.6'
 });
 globalInit(g);
 
@@ -3731,3 +3732,4 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, Ready, EventMessageWindow };
+//# sourceMappingURL=ddv-multi-window.esm.js.map

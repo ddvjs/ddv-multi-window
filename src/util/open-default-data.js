@@ -24,6 +24,7 @@ export default function () {
       beforeRefresh: []
     },
     // 组件
-    component: null
+    component: null,
+    id: null
   }
 }
