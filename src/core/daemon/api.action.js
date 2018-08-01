@@ -38,9 +38,7 @@ export default {
           }
           options.options = input
         })
-      }
 
-      if (typeof input === 'object') {
         // 获取目标路由信息
         const { route, href } = this.$router.resolve(input)
         options.src = href
