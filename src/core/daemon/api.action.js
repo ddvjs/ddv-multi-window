@@ -38,7 +38,13 @@ export default {
           }
           options.options = input
         })
+
+        // 获取目标路由信息
+        const { route, href } = this.$router.resolve(input)
+        options.src = href
+        options.route = route
       }
+
       if (options.src) {
         // 找到对应的组件
         const matchedComponents = this.$router.getMatchedComponents(options.src)
@@ -54,11 +60,6 @@ export default {
           options.src = href
           options.route = route
         }
-      } else if (typeof input === 'object') {
-        // 获取目标路由信息
-        const { route, href } = this.$router.resolve(input)
-        options.src = href
-        options.route = route
       }
 
       if (typeof input === 'object') {
