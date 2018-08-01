@@ -211,12 +211,13 @@ export class DdvMultiWindowGlobal {
           this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh)
         }
 
-        this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow')
-
-        if (!this._ddvMultiWindow && this._ddvProcess) {
+        const ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow')
+        if (ddvMultiWindow) {
+          this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this)
+        } else if (this._ddvProcess) {
           this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
             .then(ddvMultiWindow => {
-              this._ddvMultiWindow = ddvMultiWindow
+              this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this)
             })
         }
         registerInstance(this, this)
@@ -224,6 +225,9 @@ export class DdvMultiWindowGlobal {
       created () {
       },
       destroyed () {
+        if (this._ddvMultiWindow && this._ddvMultiWindow.$destroy) {
+          this._ddvMultiWindow.$destroy()
+        }
         if (this._ddvProcess && this._ddvProcess.hook) {
           this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
             return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0

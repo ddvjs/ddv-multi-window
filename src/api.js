@@ -44,31 +44,56 @@ export function globalInit (g) {
 }
 export { DdvMultiWindow, DdvMultiWindow as default }
 function DdvMultiWindow (app, taskId) {
-  this.constructor(app, taskId)
+  this.constructor.apply(this, arguments)
 }
 DdvMultiWindow.prototype = {
   constructor,
-  open
+  open,
+  $getBySelfApp,
+  $destroy
 }
 
 vueAppMethods.forEach(method => {
   if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
     Object.defineProperty(DdvMultiWindow.prototype, method, {
       get () {
-        assert(this.app, '多窗口没有初始化')
-        return this.app[method]
+        assert(this._daemonApp, '多窗口没有初始化')
+        return this._daemonApp[method]
       },
       set (value) {
-        assert(this.app, '多窗口没有初始化')
-        return (this.app[method] = value)
+        assert(this._daemonApp, '多窗口没有初始化')
+        return (this._daemonApp[method] = value)
       }
     })
   }
 })
-function open (input) {
-  return this.app.open(input, this.taskId)
+DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
+  get () {
+    return this._selfApp ? this._selfApp._ddvProcess : null
+  }
+})
+DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
+  get () {
+    return this.$process ? this.$process.id : null
+  }
+})
+DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
+  get () {
+    return this._taskId ? this._taskId : null
+  }
+})
+function $destroy () {
+  delete this._daemonApp
+  delete this._selfApp
+  delete this._taskId
 }
-function constructor (app, taskId) {
+function $getBySelfApp (app) {
+  return new DdvMultiWindow(this._daemonApp, this._taskId, app)
+}
+function open (input) {
+  return this._daemonApp.open(input, this._taskId)
+}
+function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   process.env.NODE_ENV !== 'production' && assert(
     global.installed,
@@ -79,6 +104,7 @@ function constructor (app, taskId) {
     inBrowser,
     `必须有一个window`
   )
-  this.app = app
-  this.taskId = taskId
+  this._daemonApp = daemonApp
+  this._selfApp = selfApp || this._daemonApp
+  this._taskId = taskId
 }

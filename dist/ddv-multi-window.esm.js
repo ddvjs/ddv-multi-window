@@ -61,31 +61,56 @@ function globalInit (g) {
   global = g;
 }
 function DdvMultiWindow (app, taskId) {
-  this.constructor(app, taskId);
+  this.constructor.apply(this, arguments);
 }
 DdvMultiWindow.prototype = {
   constructor: constructor,
-  open: open
+  open: open,
+  $getBySelfApp: $getBySelfApp,
+  $destroy: $destroy
 };
 
 vueAppMethods.forEach(function (method) {
   if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
     Object.defineProperty(DdvMultiWindow.prototype, method, {
       get: function get () {
-        assert(this.app, '多窗口没有初始化');
-        return this.app[method]
+        assert(this._daemonApp, '多窗口没有初始化');
+        return this._daemonApp[method]
       },
       set: function set (value) {
-        assert(this.app, '多窗口没有初始化');
-        return (this.app[method] = value)
+        assert(this._daemonApp, '多窗口没有初始化');
+        return (this._daemonApp[method] = value)
       }
     });
   }
 });
-function open (input) {
-  return this.app.open(input, this.taskId)
+DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
+  get: function get () {
+    return this._selfApp ? this._selfApp._ddvProcess : null
+  }
+});
+DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
+  get: function get () {
+    return this.$process ? this.$process.id : null
+  }
+});
+DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
+  get: function get () {
+    return this._taskId ? this._taskId : null
+  }
+});
+function $destroy () {
+  delete this._daemonApp;
+  delete this._selfApp;
+  delete this._taskId;
 }
-function constructor (app, taskId) {
+function $getBySelfApp (app) {
+  return new DdvMultiWindow(this._daemonApp, this._taskId, app)
+}
+function open (input) {
+  return this._daemonApp.open(input, this._taskId)
+}
+function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   process.env.NODE_ENV !== 'production' && assert(
     global.installed,
@@ -96,8 +121,9 @@ function constructor (app, taskId) {
     inBrowser,
     "必须有一个window"
   );
-  this.app = app;
-  this.taskId = taskId;
+  this._daemonApp = daemonApp;
+  this._selfApp = selfApp || this._daemonApp;
+  this._taskId = taskId;
 }
 
 function Ready (options) {
@@ -2432,6 +2458,8 @@ function stringifyQuery (obj) {
 var apiAction = {
   methods: {
     open: function open (input, taskId) {
+      var this$1 = this;
+
       var opts = openDefaultData();
       // 构建配置选项
       var options = Object.create(null);
@@ -2535,6 +2563,7 @@ var apiAction = {
       this.processPut(options);
       // 判断是否需要切换到这个tab标签
       return this.tabToWindow(options.id)
+        .then(function () { return (this$1.process[options.id]); })
     },
     remove: function remove (id) {
       var this$1 = this;
@@ -3660,12 +3689,13 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
         this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
       }
 
-      this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
-
-      if (!this._ddvMultiWindow && this._ddvProcess) {
+      var ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
+      if (ddvMultiWindow) {
+        this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this);
+      } else if (this._ddvProcess) {
         this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
           .then(function (ddvMultiWindow) {
-            this$1._ddvMultiWindow = ddvMultiWindow;
+            this$1._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this$1);
           });
       }
       registerInstance(this, this);
@@ -3675,6 +3705,9 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
     destroyed: function destroyed () {
         var this$1 = this;
 
+      if (this._ddvMultiWindow && this._ddvMultiWindow.$destroy) {
+        this._ddvMultiWindow.$destroy();
+      }
       if (this._ddvProcess && this._ddvProcess.hook) {
         this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
           return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0

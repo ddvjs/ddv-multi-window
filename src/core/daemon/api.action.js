@@ -107,6 +107,7 @@ export default {
       this.processPut(options)
       // 判断是否需要切换到这个tab标签
       return this.tabToWindow(options.id)
+        .then(() => (this.process[options.id]))
     },
     remove (id) {
       const process = this.process[id]
