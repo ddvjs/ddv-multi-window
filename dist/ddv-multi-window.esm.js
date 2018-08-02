@@ -84,16 +84,19 @@ vueAppMethods.forEach(function (method) {
     });
   }
 });
+
 DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
   get: function get () {
     return this._selfApp ? this._selfApp._ddvProcess : null
   }
 });
+
 DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
   get: function get () {
     return this.$process ? this.$process.id : null
   }
 });
+
 DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
   get: function get () {
     return this._taskId ? this._taskId : null
@@ -2465,6 +2468,17 @@ var apiAction = {
           src: input
         };
       } else if (typeof input === 'object') {
+        // 进程中存在
+        if (input.id && this.pids.indexOf(input.id) > -1 && this.process[input.id]) {
+          // 直接定位到该标签
+          return this.tabToWindow(input.id)
+            .then(function () {
+              if (input.refresh === true) {
+                return this$1.refresh(input.id)
+              }
+            })
+            .then(function () { return (this$1.process[input.id]); })
+        }
         // 支持path和query
         if (!input.src && input.path) {
           var src = input.path;

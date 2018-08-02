@@ -21,6 +21,17 @@ export default {
           src: input
         }
       } else if (typeof input === 'object') {
+        // 进程中存在
+        if (input.id && this.pids.indexOf(input.id) > -1 && this.process[input.id]) {
+          // 直接定位到该标签
+          return this.tabToWindow(input.id)
+            .then(() => {
+              if (input.refresh === true) {
+                return this.refresh(input.id)
+              }
+            })
+            .then(() => (this.process[input.id]))
+        }
         // 支持path和query
         if (!input.src && input.path) {
           let src = input.path

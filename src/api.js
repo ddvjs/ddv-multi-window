@@ -67,16 +67,19 @@ vueAppMethods.forEach(method => {
     })
   }
 })
+
 DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
   get () {
     return this._selfApp ? this._selfApp._ddvProcess : null
   }
 })
+
 DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
   get () {
     return this.$process ? this.$process.id : null
   }
 })
+
 DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
   get () {
     return this._taskId ? this._taskId : null
