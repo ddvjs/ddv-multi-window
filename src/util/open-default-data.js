@@ -24,6 +24,8 @@ export default function () {
       beforeRefresh: []
     },
     // 组件
-    component: null
+    component: null,
+    parentDdvMultiWindow: null,
+    id: null
   }
 }

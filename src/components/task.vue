@@ -20,19 +20,19 @@
           v-if="id && process[id]"
           v-for="id in this.pids"
           draggable="true"
-          @click="($event) => handleTask($event, 'click', id)"
-          @contextmenu="($event) => handleTask($event, 'contextMenu', id)"
-          @drop.stop="($event) => handleTabWrapDrop($event, id)"
-          @dragstart.stop="($event) => handleTabDragStart($event, id)"
-          @dragover.stop="($event) => handleTabWrapDragOver($event, id)"
-          @dragend.stop="($event) => handleTabDragEnd($event, id)"
+          @click="handleTask($event, 'click', id)"
+          @contextmenu="handleTask($event, 'contextMenu', id)"
+          @drop.stop="handleTabWrapDrop($event, id)"
+          @dragstart.stop="handleTabDragStart($event, id)"
+          @dragover.stop="handleTabWrapDragOver($event, id)"
+          @dragend.stop="handleTabDragEnd($event, id)"
         >
           <div class="tabTask-menu__item">{{process[id].title}}</div>
           <div class="tabTask-menu__handle">
             <div class="inline-block" @click.stop="handleTask($event, 'openMasterWindow', id)">
               <i class="dmw-icon icon-new-window f14"></i>
             </div>
-            <div v-if="process[id].refreshable!==false" class="inline-block" @click="handleTask($event, 'refresh', id)">
+            <div v-if="process[id].refreshable !== false" class="inline-block" @click="handleTask($event, 'refresh', id)">
               <i class="dmw-icon icon-refresh f14"></i>
             </div>
             <div v-if="process[id].closable!==false" class="inline-block" @click="handleTask($event, 'remove', id)">
@@ -67,8 +67,8 @@
                 <div class="tabTask-menu__dropItem clearfix"  @click="handleTask($event, 'click', id)">
                   <div class="tabTask-menu__title">{{process[id].title}}</div>
                   <div class="tabTask-menu__util">
-                    <i class="dmw-icon icon-close f12" v-if="process[id].closable!==false" @click="handleTask($event, 'remove', id)"></i>
-                    <i class="dmw-icon icon-refresh f12" v-if="process[id].refreshable!==false" @click="handleTask($event, 'refresh', id)"></i>
+                    <i class="dmw-icon icon-close f12" v-if="process[id].closable !== false" @click="handleTask($event, 'remove', id)"></i>
+                    <i class="dmw-icon icon-refresh f12" v-if="process[id].refreshable !== false" @click="handleTask($event, 'refresh', id)"></i>
                   </div>
                 </div>
               </li>

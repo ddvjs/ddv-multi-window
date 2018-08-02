@@ -7,7 +7,7 @@ import isFunction from '../../util/is-function'
 
 export default {
   methods: {
-    open (input, taskId) {
+    open (input, parentDdvMultiWindow) {
       const opts = openDefaultData()
       // 构建配置选项
       var options = Object.create(null)
@@ -21,6 +21,17 @@ export default {
           src: input
         }
       } else if (typeof input === 'object') {
+        // 进程中存在
+        if (input.id && this.pids.indexOf(input.id) > -1 && this.process[input.id]) {
+          // 直接定位到该标签
+          return this.tabToWindow(input.id)
+            .then(() => {
+              if (input.refresh === true) {
+                return this.refresh(input.id)
+              }
+            })
+            .then(() => (this.process[input.id]))
+        }
         // 支持path和query
         if (!input.src && input.path) {
           let src = input.path
@@ -38,11 +49,23 @@ export default {
           }
           options.options = input
         })
+        // 还是没有src，当是在进程中找到
+        if (!options.src && parentDdvMultiWindow.$id && this.process[parentDdvMultiWindow.$id]) {
+          const task = this.process[parentDdvMultiWindow.$id]
+          const route = task.route
+          let src = route.path
 
-        // 获取目标路由信息
-        const { route, href } = this.$router.resolve(input)
-        options.src = href
-        options.route = route
+          if (input.query) {
+            src += stringifyQuery(input.query)
+          } else {
+            src += stringifyQuery(route.query)
+          }
+          options.src = src
+
+          if (!input.title && task.title) {
+            options.title = task.title
+          }
+        }
       }
 
       if (options.src) {
@@ -60,12 +83,18 @@ export default {
           options.src = href
           options.route = route
         }
+      } else if (typeof input === 'object') {
+        // 还是没有src，暂时没办法
+        // 获取目标路由信息
+        const { route, href } = this.$router.resolve(input)
+        options.src = href
+        options.route = route
       }
 
       if (typeof input === 'object') {
-        options.taskId = input.taskId || taskId
+        options.taskId = input.taskId || parentDdvMultiWindow && parentDdvMultiWindow.taskId
       } else {
-        options.taskId = options.taskId || taskId
+        options.taskId = options.taskId || parentDdvMultiWindow && parentDdvMultiWindow.taskId
       }
       // 窗口类型
       options.mode = options.mode || 'iframe'
@@ -103,10 +132,12 @@ export default {
           id: options.id
         })
       }
+      options.parentDdvMultiWindow = parentDdvMultiWindow || null
       // 修改窗口数据
       this.processPut(options)
       // 判断是否需要切换到这个tab标签
       return this.tabToWindow(options.id)
+        .then(() => (this.process[options.id]))
     },
     remove (id) {
       const process = this.process[id]

@@ -85,7 +85,7 @@ const tabRouter = {
   },
   push (location, onComplete, onAbort) {
     if (this.$vm.$ddvMultiWindow) {
-      this.$vm.$ddvMultiWindow.open(location)
+      return this.$vm.$ddvMultiWindow.open(location)
     } else {
       return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
         .then(ddvMultiWindow => ddvMultiWindow.open(location))
