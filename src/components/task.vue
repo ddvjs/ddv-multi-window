@@ -67,8 +67,8 @@
                 <div class="tabTask-menu__dropItem clearfix"  @click="handleTask($event, 'click', id)">
                   <div class="tabTask-menu__title">{{process[id].title}}</div>
                   <div class="tabTask-menu__util">
-                    <i class="dmw-icon icon-close f12" v-if="process[id].closable!==false" @click="handleTask($event, 'remove', id)"></i>
-                    <i class="dmw-icon icon-refresh f12" v-if="process[id].refreshable!==false" @click="handleTask($event, 'refresh', id)"></i>
+                    <i class="dmw-icon icon-close f12" v-if="process[id].closable !== false" @click="handleTask($event, 'remove', id)"></i>
+                    <i class="dmw-icon icon-refresh f12" v-if="process[id].refreshable !== false" @click="handleTask($event, 'refresh', id)"></i>
                   </div>
                 </div>
               </li>
