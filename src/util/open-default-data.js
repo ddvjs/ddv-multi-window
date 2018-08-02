@@ -25,6 +25,7 @@ export default function () {
     },
     // 组件
     component: null,
+    parentDdvMultiWindow: null,
     id: null
   }
 }

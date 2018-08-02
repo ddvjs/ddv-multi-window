@@ -4,12 +4,6 @@ import { inBrowser } from './util/dom'
 const vueAppMethods = [
   // 守护进程id
   'id',
-  // 打开新窗口
-  'open',
-  // 移除窗口
-  'remove',
-  // 刷新窗口
-  'refresh',
   // 试图运行
   'tryRun',
   // 进程
@@ -49,8 +43,18 @@ function DdvMultiWindow (app, taskId) {
 DdvMultiWindow.prototype = {
   constructor,
   open,
+  remove,
+  // 刷新窗口
+  refresh,
+  close: remove,
   $getBySelfApp,
-  $destroy
+  $destroy,
+  back,
+  backRefresh,
+  removeBack,
+  removeBackRefresh,
+  closeBack: removeBack,
+  closeBackRefresh: removeBackRefresh
 }
 
 vueAppMethods.forEach(method => {
@@ -85,17 +89,52 @@ DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMu
     return this._taskId ? this._taskId : null
   }
 })
+
+DdvMultiWindow.prototype.hasOwnProperty('$parent') || Object.defineProperty(DdvMultiWindow.prototype, '$parent', {
+  get () {
+    return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
+  }
+})
 function $destroy () {
   delete this._daemonApp
   delete this._selfApp
   delete this._taskId
 }
+
 function $getBySelfApp (app) {
   return new DdvMultiWindow(this._daemonApp, this._taskId, app)
 }
+
 function open (input) {
-  return this._daemonApp.open(input, this._taskId)
+  return this._daemonApp.open(input, this)
 }
+
+function remove (id) {
+  const $id = id || this.$id
+  return this._daemonApp.remove($id)
+}
+
+function refresh (id) {
+  const $id = id || this.$id
+  return this._daemonApp.refresh($id)
+}
+
+function back () {
+  return this.$parent && this.tabToWindow(this.$parent.$id)
+}
+
+function backRefresh () {
+  return this.back().then(() => this.refresh(this.$parent.$id))
+}
+
+function removeBack () {
+  return this.back().then(() => this.remove())
+}
+
+function removeBackRefresh () {
+  return this.backRefresh().then(() => this.remove())
+}
+
 function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   process.env.NODE_ENV !== 'production' && assert(
