@@ -3836,4 +3836,3 @@ function registerInstance (vm, callVal) {
 
 export default g;
 export { _Vue, DdvMultiWindowGlobal, Ready, EventMessageWindow };
-//# sourceMappingURL=ddv-multi-window.esm.js.map
