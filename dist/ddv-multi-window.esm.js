@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.6
+  * ddv-multi-window v0.1.7
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -3820,7 +3820,7 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.6'
+  version: '0.1.7'
 });
 globalInit(g);
 

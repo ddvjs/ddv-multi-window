@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.5
+  * ddv-multi-window v0.1.6
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -26,12 +26,6 @@ var inBrowser = typeof window !== 'undefined';
 var vueAppMethods = [
   // 守护进程id
   'id',
-  // 打开新窗口
-  'open',
-  // 移除窗口
-  'remove',
-  // 刷新窗口
-  'refresh',
   // 试图运行
   'tryRun',
   // 进程
@@ -65,31 +59,110 @@ function globalInit (g) {
   global = g;
 }
 function DdvMultiWindow (app, taskId) {
-  this.constructor(app, taskId);
+  this.constructor.apply(this, arguments);
 }
 DdvMultiWindow.prototype = {
   constructor: constructor,
-  open: open
+  open: open,
+  remove: remove,
+  // 刷新窗口
+  refresh: refresh,
+  close: remove,
+  $getBySelfApp: $getBySelfApp,
+  $destroy: $destroy,
+  back: back,
+  backRefresh: backRefresh,
+  removeBack: removeBack,
+  removeBackRefresh: removeBackRefresh,
+  closeBack: removeBack,
+  closeBackRefresh: removeBackRefresh
 };
 
 vueAppMethods.forEach(function (method) {
   if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
     Object.defineProperty(DdvMultiWindow.prototype, method, {
       get: function get () {
-        assert(this.app, '多窗口没有初始化');
-        return this.app[method]
+        assert(this._daemonApp, '多窗口没有初始化');
+        return this._daemonApp[method]
       },
       set: function set (value) {
-        assert(this.app, '多窗口没有初始化');
-        return (this.app[method] = value)
+        assert(this._daemonApp, '多窗口没有初始化');
+        return (this._daemonApp[method] = value)
       }
     });
   }
 });
-function open (input) {
-  return this.app.open(input, this.taskId)
+
+DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
+  get: function get () {
+    return this._selfApp ? this._selfApp._ddvProcess : null
+  }
+});
+
+DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
+  get: function get () {
+    return this.$process ? this.$process.id : null
+  }
+});
+
+DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
+  get: function get () {
+    return this._taskId ? this._taskId : null
+  }
+});
+
+DdvMultiWindow.prototype.hasOwnProperty('$parent') || Object.defineProperty(DdvMultiWindow.prototype, '$parent', {
+  get: function get () {
+    return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
+  }
+});
+function $destroy () {
+  delete this._daemonApp;
+  delete this._selfApp;
+  delete this._taskId;
 }
-function constructor (app, taskId) {
+
+function $getBySelfApp (app) {
+  return new DdvMultiWindow(this._daemonApp, this._taskId, app)
+}
+
+function open (input) {
+  return this._daemonApp.open(input, this)
+}
+
+function remove (id) {
+  var $id = id || this.$id;
+  return this._daemonApp.remove($id)
+}
+
+function refresh (id) {
+  var $id = id || this.$id;
+  return this._daemonApp.refresh($id)
+}
+
+function back () {
+  return this.$parent && this.tabToWindow(this.$parent.$id)
+}
+
+function backRefresh () {
+  var this$1 = this;
+
+  return this.back().then(function () { return this$1.refresh(this$1.$parent.$id); })
+}
+
+function removeBack () {
+  var this$1 = this;
+
+  return this.back().then(function () { return this$1.remove(); })
+}
+
+function removeBackRefresh () {
+  var this$1 = this;
+
+  return this.backRefresh().then(function () { return this$1.remove(); })
+}
+
+function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   process.env.NODE_ENV !== 'production' && assert(
     global.installed,
@@ -100,8 +173,9 @@ function constructor (app, taskId) {
     inBrowser,
     "必须有一个window"
   );
-  this.app = app;
-  this.taskId = taskId;
+  this._daemonApp = daemonApp;
+  this._selfApp = selfApp || this._daemonApp;
+  this._taskId = taskId;
 }
 
 function Ready (options) {
@@ -261,7 +335,7 @@ Object.assign(EventMessageWindow.prototype, {
 }, {
   on: on,
   emit: emit,
-  remove: remove,
+  remove: remove$1,
   destroy: destroy,
   onCatch: onCatch,
   receive: receive,
@@ -473,7 +547,7 @@ function postMessageEvent (contentWindow, message) {
   return false
 }
 // 移除监听
-function remove (type, fn) {
+function remove$1 (type, fn) {
   var this$1 = this;
 
   if (typeof type === 'function') {
@@ -1049,34 +1123,26 @@ var __vue_render__ = function() {
                     attrs: { processid: id, draggable: "true" },
                     on: {
                       click: function($event) {
-                        return _vm.handleTask($event, "click", id)
+                        _vm.handleTask($event, "click", id);
                       },
                       contextmenu: function($event) {
-                        return _vm.handleTask($event, "contextMenu", id)
+                        _vm.handleTask($event, "contextMenu", id);
                       },
                       drop: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabWrapDrop($event, id)
-                        })($event)
+                        _vm.handleTabWrapDrop($event, id);
                       },
                       dragstart: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabDragStart($event, id)
-                        })($event)
+                        _vm.handleTabDragStart($event, id);
                       },
                       dragover: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabWrapDragOver($event, id)
-                        })($event)
+                        _vm.handleTabWrapDragOver($event, id);
                       },
                       dragend: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabDragEnd($event, id)
-                        })($event)
+                        _vm.handleTabDragEnd($event, id);
                       }
                     }
                   },
@@ -2389,7 +2455,9 @@ function openDefaultData () {
       beforeRefresh: []
     },
     // 组件
-    component: null
+    component: null,
+    parentDdvMultiWindow: null,
+    id: null
   }
 }
 
@@ -2434,7 +2502,9 @@ function stringifyQuery (obj) {
 
 var apiAction = {
   methods: {
-    open: function open (input, taskId) {
+    open: function open (input, parentDdvMultiWindow) {
+      var this$1 = this;
+
       var opts = openDefaultData();
       // 构建配置选项
       var options = Object.create(null);
@@ -2448,6 +2518,17 @@ var apiAction = {
           src: input
         };
       } else if (typeof input === 'object') {
+        // 进程中存在
+        if (input.id && this.pids.indexOf(input.id) > -1 && this.process[input.id]) {
+          // 直接定位到该标签
+          return this.tabToWindow(input.id)
+            .then(function () {
+              if (input.refresh === true) {
+                return this$1.refresh(input.id)
+              }
+            })
+            .then(function () { return (this$1.process[input.id]); })
+        }
         // 支持path和query
         if (!input.src && input.path) {
           var src = input.path;
@@ -2465,13 +2546,23 @@ var apiAction = {
           }
           options.options = input;
         });
+        // 还是没有src，当是在进程中找到
+        if (!options.src && parentDdvMultiWindow.$id && this.process[parentDdvMultiWindow.$id]) {
+          var task = this.process[parentDdvMultiWindow.$id];
+          var route = task.route;
+          var src$1 = route.path;
 
-        // 获取目标路由信息
-        var ref = this.$router.resolve(input);
-        var route = ref.route;
-        var href = ref.href;
-        options.src = href;
-        options.route = route;
+          if (input.query) {
+            src$1 += stringifyQuery(input.query);
+          } else {
+            src$1 += stringifyQuery(route.query);
+          }
+          options.src = src$1;
+
+          if (!input.title && task.title) {
+            options.title = task.title;
+          }
+        }
       }
 
       if (options.src) {
@@ -2485,18 +2576,26 @@ var apiAction = {
         // 找到组件
         if (matchedComponents.length) {
           // 获取目标路由信息
-          var ref$1 = this.$router.resolve(options.src);
-          var route$1 = ref$1.route;
-          var href$1 = ref$1.href;
-          options.src = href$1;
+          var ref = this.$router.resolve(options.src);
+          var route$1 = ref.route;
+          var href = ref.href;
+          options.src = href;
           options.route = route$1;
         }
+      } else if (typeof input === 'object') {
+        // 还是没有src，暂时没办法
+        // 获取目标路由信息
+        var ref$1 = this.$router.resolve(input);
+        var route$2 = ref$1.route;
+        var href$1 = ref$1.href;
+        options.src = href$1;
+        options.route = route$2;
       }
 
       if (typeof input === 'object') {
-        options.taskId = input.taskId || taskId;
+        options.taskId = input.taskId || parentDdvMultiWindow && parentDdvMultiWindow.taskId;
       } else {
-        options.taskId = options.taskId || taskId;
+        options.taskId = options.taskId || parentDdvMultiWindow && parentDdvMultiWindow.taskId;
       }
       // 窗口类型
       options.mode = options.mode || 'iframe';
@@ -2534,10 +2633,12 @@ var apiAction = {
           id: options.id
         });
       }
+      options.parentDdvMultiWindow = parentDdvMultiWindow || null;
       // 修改窗口数据
       this.processPut(options);
       // 判断是否需要切换到这个tab标签
       return this.tabToWindow(options.id)
+        .then(function () { return (this$1.process[options.id]); })
     },
     remove: function remove (id) {
       var this$1 = this;
@@ -3082,7 +3183,7 @@ var tabRouter$1 = {
   },
   push: function push (location, onComplete, onAbort) {
     if (this.$vm.$ddvMultiWindow) {
-      this.$vm.$ddvMultiWindow.open(location);
+      return this.$vm.$ddvMultiWindow.open(location)
     } else {
       return this.daemonApp.$ddvMultiWindowGlobal.get(this.process.daemonId, this.process.taskId)
         .then(function (ddvMultiWindow) { return ddvMultiWindow.open(location); })
@@ -3663,12 +3764,13 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
         this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
       }
 
-      this._ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
-
-      if (!this._ddvMultiWindow && this._ddvProcess) {
+      var ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
+      if (ddvMultiWindow) {
+        this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this);
+      } else if (this._ddvProcess) {
         this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
           .then(function (ddvMultiWindow) {
-            this$1._ddvMultiWindow = ddvMultiWindow;
+            this$1._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this$1);
           });
       }
       registerInstance(this, this);
@@ -3678,6 +3780,9 @@ DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstan
     destroyed: function destroyed () {
         var this$1 = this;
 
+      if (this._ddvMultiWindow && this._ddvMultiWindow.$destroy) {
+        this._ddvMultiWindow.$destroy();
+      }
       if (this._ddvProcess && this._ddvProcess.hook) {
         this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
           return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
@@ -3719,7 +3824,7 @@ DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.definePrope
 var g = Object.assign((new DdvMultiWindowGlobal()), {
   isDaemon: true,
   Ready: Ready,
-  version: '0.1.5'
+  version: '0.1.6'
 });
 globalInit(g);
 
