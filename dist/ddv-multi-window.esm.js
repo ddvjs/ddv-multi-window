@@ -1071,34 +1071,26 @@ var __vue_render__ = function() {
                     attrs: { processid: id, draggable: "true" },
                     on: {
                       click: function($event) {
-                        return _vm.handleTask($event, "click", id)
+                        _vm.handleTask($event, "click", id);
                       },
                       contextmenu: function($event) {
-                        return _vm.handleTask($event, "contextMenu", id)
+                        _vm.handleTask($event, "contextMenu", id);
                       },
                       drop: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabWrapDrop($event, id)
-                        })($event)
+                        _vm.handleTabWrapDrop($event, id);
                       },
                       dragstart: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabDragStart($event, id)
-                        })($event)
+                        _vm.handleTabDragStart($event, id);
                       },
                       dragover: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabWrapDragOver($event, id)
-                        })($event)
+                        _vm.handleTabWrapDragOver($event, id);
                       },
                       dragend: function($event) {
                         $event.stopPropagation();
-                        return (function($event) {
-                          return _vm.handleTabDragEnd($event, id)
-                        })($event)
+                        _vm.handleTabDragEnd($event, id);
                       }
                     }
                   },
