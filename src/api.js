@@ -1,5 +1,6 @@
 import { assert } from './util/warn'
 import { inBrowser } from './util/dom'
+import { isDef } from './util/is-def'
 
 const vueAppMethods = [
   // 守护进程id
@@ -56,6 +57,9 @@ DdvMultiWindow.prototype = {
   closeBack: removeBack,
   closeBackRefresh: removeBackRefresh
 }
+const prototypes = {
+  
+}
 
 vueAppMethods.forEach(method => {
   if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
@@ -72,28 +76,18 @@ vueAppMethods.forEach(method => {
   }
 })
 
-DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
-  get () {
-    return this._selfApp ? this._selfApp._ddvProcess : null
-  }
-})
 
-DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
-  get () {
-    return this.$process ? this.$process.id : null
-  }
+defineProperty('$process', function () {
+  return this._selfApp ? this._selfApp._ddvProcess : null
 })
-
-DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
-  get () {
-    return this._taskId ? this._taskId : null
-  }
+defineProperty('$id', function () {
+  return this.$process ? this.$process.id : null
 })
-
-DdvMultiWindow.prototype.hasOwnProperty('$parent') || Object.defineProperty(DdvMultiWindow.prototype, '$parent', {
-  get () {
-    return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
-  }
+defineProperty('taskId', function () {
+  return this._taskId ? this._taskId : null
+})
+defineProperty('$parent', function () {
+  return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
 })
 function $destroy () {
   delete this._daemonApp
@@ -149,4 +143,15 @@ function constructor (daemonApp, taskId, selfApp) {
   this._daemonApp = daemonApp
   this._selfApp = selfApp || this._daemonApp
   this._taskId = taskId
+}
+function defineProperty (key, get, set) {
+  let obj = {}
+  if (isDef(get)) {
+    obj.get = get
+  }
+  if (isDef(set)) {
+    obj.set = set
+  }
+  DdvMultiWindow.prototype.hasOwnProperty(key) || Object.defineProperty(DdvMultiWindow.prototype, key, obj)
+  obj = void 0
 }
