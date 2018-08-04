@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.8
+  * ddv-multi-window v0.1.9
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -3175,7 +3175,7 @@ var hp = Object.hasOwnProperty;
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.8',
+  version: '0.1.9',
   Ready: Ready,
   install: vueInstall,
   installed: false,
@@ -4073,4 +4073,3 @@ if (inBrowser && window.Vue) {
 
 export default global;
 export { Ready, install, EventMessageWindow };
-//# sourceMappingURL=ddv-multi-window.esm.js.map
