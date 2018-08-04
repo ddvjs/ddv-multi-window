@@ -175,12 +175,13 @@ function constructor (daemonApp, taskId, process) {
     isProduction || inBrowser,
     `必须有一个window`
   )
+  this._vueModels = []
   this._daemonApp = daemonApp
   this._initTaskId = taskId
   this._process = process || null
 }
 function register (vm) {
-  Array.isArray(this.vueModels) && this.vueModels.push(vm)
+  Array.isArray(this._vueModels) && this._vueModels.push(vm)
   if (this.process && vm && vm.$options.beforeDdvMultiWindowRefresh && vm.$options.beforeDdvMultiWindowRefresh.length) {
     this.process.hook.beforeRefresh.push.apply(this.process.hook.beforeRefresh, vm.$options.beforeDdvMultiWindowRefresh)
   }
@@ -191,12 +192,13 @@ function unregister (vm) {
       return vm.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
     })
   }
-  if (Array.isArray(this.vueModels)) {
-    this.vueModels = this.vueModels.filter(v => (vm !== v))
-    this.vueModels.length || this.destroy()
+  if (Array.isArray(this._vueModels)) {
+    this._vueModels = this._vueModels.filter(v => (vm !== v))
+    this._vueModels.length || this.destroy()
   }
 }
 function destroy () {
+  delete this._vueModels
   delete this._daemonApp
   delete this._initTaskId
   delete this._process

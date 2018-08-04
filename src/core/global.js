@@ -182,7 +182,7 @@ function RegisterInstanceInstall (Vue) {
   })
 }
 function VuePrototypeInstall (Vue) {
-  Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
+  hp(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get () {
       if (!this._ddvMultiWindow) {
         this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow')
@@ -194,7 +194,7 @@ function VuePrototypeInstall (Vue) {
       }
     }
   })
-  Vue.prototype.hasOwnProperty('$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
+  hp(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
     get: () => this
   })
 }
