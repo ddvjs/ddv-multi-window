@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.7
+  * ddv-multi-window v0.1.8
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -2960,7 +2960,7 @@ var global = new DdvMultiWindowGlobal();
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.7',
+  version: '0.1.8',
   Ready: Ready,
   install: vueInstall,
   installed: false,
