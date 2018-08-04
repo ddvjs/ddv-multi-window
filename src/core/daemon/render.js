@@ -1,5 +1,5 @@
 import LoadComponent from '../../components/load'
-import TaskComponent from '../../components/task.vue'
+import TaskComponent from '../../components/task'
 import cloneRenderOptions from '../../util/clone-render-options'
 const ErrorComponent = LoadComponent
 export default function render (h) {
@@ -140,7 +140,8 @@ function taskChildrenRender (h, task) {
   const props = {
     task,
     process: this.process,
-    handleTask: this.handleTask
+    handleTask: this.handleTask,
+    taskOptions: this.taskOptions
   }
   const children = []
   if (this.$scopedSlots && this.$scopedSlots.task) {

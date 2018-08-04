@@ -1,90 +1,95 @@
 <template>
-  <section class="tabTask">
-    <!-- tab栏 -->
-    <div class="tabTask-menu">
-      <ul
-        class="tabTask-menu__ul clearfix"
-        ref="tabTaskWrap"
-        @dragover.stop="($event) => handleTabWrapDragOver($event, null)"
-        @dragleave.stop="($event) => handleTabWrapDragLeave($event)"
-        @drop.stop="($event) => handleTabWrapDrop($event, null)"
-        >
-        <li
-          ref="tabTask"
-          class="tabTask-menu__li"
-          :class="{
-            'tabTask-menu__linow': id === activeId
-          }"
-          :key="id"
-          :processid="id"
-          v-if="id && process[id]"
-          v-for="id in this.pids"
-          draggable="true"
-          @click="handleTask($event, 'click', id)"
-          @contextmenu="handleTask($event, 'contextMenu', id)"
-          @drop.stop="handleTabWrapDrop($event, id)"
-          @dragstart.stop="handleTabDragStart($event, id)"
-          @dragover.stop="handleTabWrapDragOver($event, id)"
-          @dragend.stop="handleTabDragEnd($event, id)"
-        >
-          <div class="tabTask-menu__item">{{process[id].title}}</div>
-          <div class="tabTask-menu__handle">
-            <div class="inline-block" @click.stop="handleTask($event, 'openMasterWindow', id)">
-              <i class="dmw-icon icon-new-window f14"></i>
-            </div>
-            <div v-if="process[id].refreshable !== false" class="inline-block" @click="handleTask($event, 'refresh', id)">
-              <i class="dmw-icon icon-refresh f14"></i>
-            </div>
-            <div v-if="process[id].closable!==false" class="inline-block" @click="handleTask($event, 'remove', id)">
-              <i class="dmw-icon icon-close f14"></i>
-            </div>
+  <!-- tab栏 -->
+  <div class="tabTask-menu tabTask">
+    <ul
+      :style="taskMenuStyle"
+      class="tabTask-menu__ul clearfix"
+      ref="tabTaskWrap"
+      @dragover.stop="handleTabWrapDragOver($event, null)"
+      @dragleave.stop="handleTabWrapDragLeave($event)"
+      @drop.stop="handleTabWrapDrop($event, null)"
+      >
+      <li
+        ref="tabTask"
+        class="tabTask-menu__li"
+        :class="{
+          'tabTask-menu__linow': id === activeId
+        }"
+        :key="id"
+        :processid="id"
+        v-if="id && process[id]"
+        v-for="id in this.pids"
+        draggable="true"
+        @click="handleTask($event, 'click', id)"
+        @contextmenu="handleTask($event, 'contextMenu', id)"
+        @drop.stop="handleTabWrapDrop($event, id)"
+        @dragstart.stop="handleTabDragStart($event, id)"
+        @dragover.stop="handleTabWrapDragOver($event, id)"
+        @dragend.stop="handleTabDragEnd($event, id)"
+      >
+        <div class="tabTask-menu__item">{{process[id].title}}</div>
+        <div class="tabTask-menu__handle">
+          <div class="inline-block" @click.stop="handleTask($event, 'openMasterWindow', id)">
+            <i class="dmw-icon icon-new-window f14"></i>
           </div>
-        </li>
-        <li
-          class="tabTask-menu__arrow"
-          ref="menuArrow"
-          @mouseenter="isShowDropdown = true"
-          @mouseleave="isShowDropdown = false">
-          <i class="dmw-icon icon-down-arrow tabTask-menu__pull f14"></i>
-          <transition name="fade">
-            <ul class="menu-dropdown" v-show="isShowDropdown">
-              <div class="menu-dropdown__arrow"></div>
-              <li class="menu-dropdown__item">
-                <div class="tabTask-menu__dropItem" @click="handleTask($event, 'removeAll', task.id)">
-                  <div class="text-center">关闭全部</div>
+          <div v-if="process[id].refreshable !== false" class="inline-block" @click="handleTask($event, 'refresh', id)">
+            <i class="dmw-icon icon-refresh f14"></i>
+          </div>
+          <div v-if="process[id].closable!==false" class="inline-block" @click="handleTask($event, 'remove', id)">
+            <i class="dmw-icon icon-close f14"></i>
+          </div>
+        </div>
+      </li>
+      <li
+        class="tabTask-menu__arrow"
+        ref="menuArrow"
+        @mouseenter="isShowDropdown = true"
+        @mouseleave="isShowDropdown = false">
+        <i class="dmw-icon icon-down-arrow tabTask-menu__pull f14"></i>
+        <transition name="fade">
+          <ul class="menu-dropdown" v-show="isShowDropdown">
+            <div class="menu-dropdown__arrow"></div>
+            <li class="menu-dropdown__item">
+              <div class="tabTask-menu__dropItem" @click="handleTask($event, 'removeAll', task.id)">
+                <div class="text-center">关闭全部</div>
+              </div>
+            </li>
+            <li class="menu-dropdown__item">
+              <div class="tabTask-menu__dropItem">
+                <div class="text-center tabTask-menu__manage">管理默认标签</div>
+              </div>
+            </li>
+            <li class="menu-dropdown__item-line" v-if="pids && pids.length > 0"></li>
+            <li
+              class="menu-dropdown__item"
+              v-for="id in pids"
+              :key="id">
+              <div class="tabTask-menu__dropItem clearfix"  @click="handleTask($event, 'click', id)">
+                <div class="tabTask-menu__title">{{process[id].title}}</div>
+                <div class="tabTask-menu__util">
+                  <i
+                    class="dmw-icon icon-close f12"
+                    v-if="process[id].closable !== false"
+                    @click="handleTask($event, 'remove', id)"></i>
+                  <i
+                    class="dmw-icon icon-refresh f12"
+                    v-if="process[id].refreshable !== false"
+                    @click="handleTask($event, 'refresh', id)"></i>
                 </div>
-              </li>
-              <li class="menu-dropdown__item">
-                <div class="tabTask-menu__dropItem">
-                  <div class="text-center tabTask-menu__manage">管理默认标签</div>
-                </div>
-              </li>
-              <li class="menu-dropdown__item-line" v-if="pids && pids.length > 0"></li>
-              <li
-                class="menu-dropdown__item"
-                v-for="id in pids"
-                :key="id">
-                <div class="tabTask-menu__dropItem clearfix"  @click="handleTask($event, 'click', id)">
-                  <div class="tabTask-menu__title">{{process[id].title}}</div>
-                  <div class="tabTask-menu__util">
-                    <i class="dmw-icon icon-close f12" v-if="process[id].closable !== false" @click="handleTask($event, 'remove', id)"></i>
-                    <i class="dmw-icon icon-refresh f12" v-if="process[id].refreshable !== false" @click="handleTask($event, 'refresh', id)"></i>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </transition>
-        </li>
-      </ul>
-    </div>
-  </section>
+              </div>
+            </li>
+          </ul>
+        </transition>
+      </li>
+    </ul>
+  </div>
 </template>
 <script>
-import ref$ from '../util/ref-to-jquery'
-import removeArray from '../util/remove-array'
+import ref$ from '../../util/ref-to-jquery'
+import removeArray from '../../util/remove-array'
 
 export default {
-  name: 'ddv-multi-window-task-template',
+  name: 'horizontal-task',
   props: {
     task: {
       type: Object
@@ -95,6 +100,9 @@ export default {
     },
     handleTask: {
       type: Function
+    },
+    taskOptions: {
+      type: Object
     }
   },
   computed: {
@@ -109,6 +117,19 @@ export default {
     },
     dragData () {
       return this.$ddvMultiWindow.dragData || {}
+    },
+    taskMenuStyle () {
+      const style = {}
+
+      if (this.taskOptions.menuStyle && typeof this.taskOptions.menuStyle === 'object') {
+        const keys = Object.keys(this.taskOptions.menuStyle)
+        keys.forEach(key => {
+          if (this.taskOptions.menuStyle[keys] || this.taskOptions.menuStyle[keys] === 0) {
+            style[key] = this.taskOptions.menuStyle[keys]
+          }
+        })
+      }
+      return style
     }
   },
   data () {
@@ -146,8 +167,6 @@ export default {
         // 实际显示位置
         if (isHide) {
           placeholder = $li.innerWidth() + marginLeft - marginRight
-          // obj.startX = 0
-          // obj.endX = 0
         } else {
           obj.startX = position.left + marginLeft - placeholder
           obj.endX = position.left + $li.innerWidth() + marginLeft - marginRight - placeholder
@@ -171,12 +190,14 @@ export default {
     },
     // tab标签 - 开始拖动源对象
     handleTabDragStart (event, pid) {
+      const process = this.process[pid]
       const $tabTask = ref$(this.$refs.tabTask)
       this.dragData.$dom = $tabTask.closest(event.target)
       ref$(this.$refs.tabTask)
         .addClass('transition')
       this.setInfo(event)
       this.dragData.id = pid
+      this.dragData.ing = true
       this.dragData.taskId = this.taskId
       // 原始taskId
       this.dragData.rootTaskId = this.taskId
@@ -193,10 +214,14 @@ export default {
           windowId: pid
         }
       }))
-      event.dataTransfer.setData('text/plain', 'http://www.baidu.com/sfa/ss')
+      event.dataTransfer.setData('text/plain', process.href || process.src)
     },
     // tab标签 - 拖动结束
     handleTabDragEnd (event, pid) {
+      if (this.dragData.ing !== true) {
+        return
+      }
+      this.dragData.ing = false
       ref$(this.$refs.tabTask)
         .removeClass('transition')
       this.activeEvent = null
@@ -224,6 +249,9 @@ export default {
     },
     // tab标签 - 在目标区域拖拽
     handleTabWrapDragOver (event, dropId) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 注意禁止浏览器默认事件
       event.preventDefault()
       const $tabTask = ref$(this.$refs.tabTask)
@@ -281,6 +309,9 @@ export default {
     },
     // tab盒子 - 离开目标区域
     handleTabWrapDragLeave (event) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 超出盒子范围内
       if (!(event.pageY >= this.dragData.barStartY && event.pageY <= this.dragData.barEndY - 2)) {
         this.reduction()
@@ -288,6 +319,9 @@ export default {
     },
     // tab盒子 - 拖落在tab盒子区域
     handleTabWrapDrop (event, dropId) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       ref$(this.$refs.tabTask)
         .removeClass('transition')
       event.preventDefault()
@@ -360,9 +394,6 @@ export default {
       handler: 'pidsChange'
     }
   },
-  destroyed () {},
-  mounted () {
-    // 必须 是 mounted 后执行，非 ddvReadyd 事件
-  }
+  destroyed () {}
 }
 </script>
