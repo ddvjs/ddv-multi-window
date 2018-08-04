@@ -14,9 +14,9 @@ import { warn } from '../util/warn'
 import { getWindow, getDaemonWindow } from '../util/window'
 
 const dp = DdvMultiWindowGlobal.prototype = Object.create(null)
-const hp = Object.hasOwnProperty
 const ps = Object.create(null)
 const global = new DdvMultiWindowGlobal()
+const hp = Object.hasOwnProperty
 
 Object.assign(global, {
   get,
@@ -182,7 +182,7 @@ function RegisterInstanceInstall (Vue) {
   })
 }
 function VuePrototypeInstall (Vue) {
-  hp(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
+  hp.call(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get () {
       if (!this._ddvMultiWindow) {
         this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow')
@@ -194,7 +194,8 @@ function VuePrototypeInstall (Vue) {
       }
     }
   })
-  hp(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
+
+  hp.call(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
     get: () => this
   })
 }

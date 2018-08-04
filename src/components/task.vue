@@ -146,8 +146,6 @@ export default {
         // 实际显示位置
         if (isHide) {
           placeholder = $li.innerWidth() + marginLeft - marginRight
-          // obj.startX = 0
-          // obj.endX = 0
         } else {
           obj.startX = position.left + marginLeft - placeholder
           obj.endX = position.left + $li.innerWidth() + marginLeft - marginRight - placeholder
@@ -171,12 +169,14 @@ export default {
     },
     // tab标签 - 开始拖动源对象
     handleTabDragStart (event, pid) {
+      const process = this.process[pid]
       const $tabTask = ref$(this.$refs.tabTask)
       this.dragData.$dom = $tabTask.closest(event.target)
       ref$(this.$refs.tabTask)
         .addClass('transition')
       this.setInfo(event)
       this.dragData.id = pid
+      this.dragData.ing = true
       this.dragData.taskId = this.taskId
       // 原始taskId
       this.dragData.rootTaskId = this.taskId
@@ -193,10 +193,14 @@ export default {
           windowId: pid
         }
       }))
-      event.dataTransfer.setData('text/plain', 'http://www.baidu.com/sfa/ss')
+      event.dataTransfer.setData('text/plain', process.href || process.src)
     },
     // tab标签 - 拖动结束
     handleTabDragEnd (event, pid) {
+      if (this.dragData.ing !== true) {
+        return
+      }
+      this.dragData.ing = false
       ref$(this.$refs.tabTask)
         .removeClass('transition')
       this.activeEvent = null
@@ -224,6 +228,9 @@ export default {
     },
     // tab标签 - 在目标区域拖拽
     handleTabWrapDragOver (event, dropId) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 注意禁止浏览器默认事件
       event.preventDefault()
       const $tabTask = ref$(this.$refs.tabTask)
@@ -281,6 +288,9 @@ export default {
     },
     // tab盒子 - 离开目标区域
     handleTabWrapDragLeave (event) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 超出盒子范围内
       if (!(event.pageY >= this.dragData.barStartY && event.pageY <= this.dragData.barEndY - 2)) {
         this.reduction()
@@ -288,6 +298,9 @@ export default {
     },
     // tab盒子 - 拖落在tab盒子区域
     handleTabWrapDrop (event, dropId) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       ref$(this.$refs.tabTask)
         .removeClass('transition')
       event.preventDefault()

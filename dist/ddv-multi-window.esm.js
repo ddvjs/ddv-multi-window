@@ -221,8 +221,6 @@ var script = {
         // 实际显示位置
         if (isHide) {
           placeholder = $li.innerWidth() + marginLeft - marginRight;
-          // obj.startX = 0
-          // obj.endX = 0
         } else {
           obj.startX = position.left + marginLeft - placeholder;
           obj.endX = position.left + $li.innerWidth() + marginLeft - marginRight - placeholder;
@@ -246,12 +244,14 @@ var script = {
     },
     // tab标签 - 开始拖动源对象
     handleTabDragStart: function handleTabDragStart (event, pid) {
+      var process = this.process[pid];
       var $tabTask = refToJquery(this.$refs.tabTask);
       this.dragData.$dom = $tabTask.closest(event.target);
       refToJquery(this.$refs.tabTask)
         .addClass('transition');
       this.setInfo(event);
       this.dragData.id = pid;
+      this.dragData.ing = true;
       this.dragData.taskId = this.taskId;
       // 原始taskId
       this.dragData.rootTaskId = this.taskId;
@@ -268,12 +268,16 @@ var script = {
           windowId: pid
         }
       }));
-      event.dataTransfer.setData('text/plain', 'http://www.baidu.com/sfa/ss');
+      event.dataTransfer.setData('text/plain', process.href || process.src);
     },
     // tab标签 - 拖动结束
     handleTabDragEnd: function handleTabDragEnd (event, pid) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
+      this.dragData.ing = false;
       refToJquery(this.$refs.tabTask)
         .removeClass('transition');
       this.activeEvent = null;
@@ -302,6 +306,9 @@ var script = {
     handleTabWrapDragOver: function handleTabWrapDragOver (event, dropId) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 注意禁止浏览器默认事件
       event.preventDefault();
       var $tabTask = refToJquery(this.$refs.tabTask);
@@ -359,6 +366,9 @@ var script = {
     },
     // tab盒子 - 离开目标区域
     handleTabWrapDragLeave: function handleTabWrapDragLeave (event) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 超出盒子范围内
       if (!(event.pageY >= this.dragData.barStartY && event.pageY <= this.dragData.barEndY - 2)) {
         this.reduction();
@@ -368,6 +378,9 @@ var script = {
     handleTabWrapDrop: function handleTabWrapDrop (event, dropId) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
       refToJquery(this.$refs.tabTask)
         .removeClass('transition');
       event.preventDefault();
@@ -2953,9 +2966,9 @@ function getByParent (parent, key) {
 }
 
 var dp = DdvMultiWindowGlobal.prototype = Object.create(null);
-var hp = Object.hasOwnProperty;
 var ps = Object.create(null);
 var global = new DdvMultiWindowGlobal();
+var hp = Object.hasOwnProperty;
 
 Object.assign(global, {
   get: get,
@@ -3125,7 +3138,7 @@ function RegisterInstanceInstall (Vue) {
 function VuePrototypeInstall (Vue) {
   var this$1 = this;
 
-  hp(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
+  hp.call(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get: function get () {
       if (!this._ddvMultiWindow) {
         this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow');
@@ -3137,7 +3150,8 @@ function VuePrototypeInstall (Vue) {
       }
     }
   });
-  hp(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
+
+  hp.call(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
     get: function () { return this$1; }
   });
 }
@@ -3863,3 +3877,4 @@ if (inBrowser && window.Vue) {
 
 export default global;
 export { Ready, install, EventMessageWindow };
+//# sourceMappingURL=ddv-multi-window.esm.js.map
