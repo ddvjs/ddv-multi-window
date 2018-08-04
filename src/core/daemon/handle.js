@@ -103,7 +103,7 @@ export default {
         })
         .then(() => {
           // 移动窗口到
-          return this.$ddvMultiWindow.windowAppendChild({
+          return this.windowAppendChild({
             id,
             taskId: process.taskId
           })

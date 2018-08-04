@@ -14,12 +14,13 @@ setDdvMultiWindow(DdvMultiWindow)
 // 方法
 Object.assign(dp, {
   constructor,
+  register,
+  unregister,
   open,
   remove,
   // 刷新窗口
   refresh,
   close: remove,
-  $getBySelfApp,
   destroy,
   back,
   backRefresh,
@@ -30,8 +31,6 @@ Object.assign(dp, {
 })
 // 属性
 Object.assign(ps, {
-  // 守护进程id
-  daemonId: pd,
   // 试图运行
   tryRun: pd,
   // 错误
@@ -42,7 +41,7 @@ Object.assign(ps, {
   dragProcess: pd,
 
   // 进程
-  process: pd,
+  // process: pd,
   // 初始化
   masterViewInit: pd,
   // 切换窗口
@@ -60,26 +59,21 @@ Object.assign(ps, {
   // 还原
   closeMasterWindow: pd,
   masterMoveParentByTaskId: pd,
-
-  $process () {
-    return this._selfApp ? this._selfApp._ddvProcess : null
+  // 进程
+  process () {
+    return this._process ? this._process : null
   },
-  id () {
-    return this.$process ? this.$process.id : null
-  },
-  taskId,
+  // 进程id
+  id,
+  // 父层
   parent,
-  daemonApp () {
-    return this._daemonApp ? this._daemonApp : null
-  },
-  selfApp () {
-    return this._selfApp ? this._selfApp : null
-  }
+  // 任务栏id
+  taskId,
+  // 守护进程id
+  daemonId: pd,
+  // 守护进程vue实例
+  daemonApp
 })
-
-function $getBySelfApp (app) {
-  return new DdvMultiWindow(this.daemonApp, this.taskId, app)
-}
 
 function open (input) {
   return this.daemonApp.open(input, this)
@@ -92,11 +86,17 @@ function remove (id) {
 function refresh (id) {
   return this.daemonApp.refresh(id || this.id)
 }
-function taskId () {
-  return this._taskId ? this._taskId : null
+function id () {
+  return this.process ? this.process.id : null
 }
 function parent () {
-  return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
+  return this.process && this.process.parentDdvMultiWindow ? this.process.parentDdvMultiWindow : null
+}
+function taskId () {
+  return this.process ? this.process.taskId : (this._initTaskId ? this._initTaskId : null)
+}
+function daemonApp () {
+  return this._daemonApp ? this._daemonApp : null
 }
 function back () {
   return this.parent && this.tabToWindow(this.parent.id)
@@ -122,10 +122,16 @@ Object.keys(ps).forEach(method => {
   if (item === pd) {
     Object.defineProperty(dp, method, {
       get () {
+        if (!this.daemonApp) {
+          debugger
+        }
         assert(this.daemonApp, '多窗口没有初始化')
         return this.daemonApp[method]
       },
       set (value) {
+        if (!this.daemonApp) {
+          debugger
+        }
         assert(this.daemonApp, '多窗口没有初始化')
         return (this.daemonApp[method] = value)
       }
@@ -152,7 +158,8 @@ function DdvMultiWindow () {
   }
 }
 
-function constructor (daemonApp, taskId, selfApp) {
+function constructor (daemonApp, taskId, process) {
+  console.log('44-constructor', daemonApp, taskId, process)
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   assert(
     isp || global.installed,
@@ -164,13 +171,30 @@ function constructor (daemonApp, taskId, selfApp) {
     `必须有一个window`
   )
   this._daemonApp = daemonApp
-  this._selfApp = selfApp || daemonApp
-  this._taskId = taskId
+  this._initTaskId = taskId
+  this._process = process || null
+}
+function register (vm) {
+  Array.isArray(this.vueModels) && this.vueModels.push(vm)
+  if (this.process && vm && vm.$options.beforeDdvMultiWindowRefresh && vm.$options.beforeDdvMultiWindowRefresh.length) {
+    this.process.hook.beforeRefresh.push.apply(this.process.hook.beforeRefresh, vm.$options.beforeDdvMultiWindowRefresh)
+  }
+}
+function unregister (vm) {
+  if (this.process && this.process.hook && vm && vm.$options && vm.$options.beforeDdvMultiWindowRefresh) {
+    this.process.hook.beforeRefresh = this.process.hook.beforeRefresh.filter(fn => {
+      return vm.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+    })
+  }
+  if (Array.isArray(this.vueModels)) {
+    this.vueModels = this.vueModels.filter(v => (vm !== v))
+    this.vueModels.length || this.destroy()
+  }
 }
 function destroy () {
   delete this._daemonApp
-  delete this._selfApp
-  delete this._taskId
+  delete this._initTaskId
+  delete this._process
 }
 
 export { DdvMultiWindow, DdvMultiWindow as default }
