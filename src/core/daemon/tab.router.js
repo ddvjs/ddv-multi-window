@@ -1,5 +1,5 @@
 import { throwError } from '../../util/get-error'
-
+import DdvMultiWindow from '../api'
 export default {
   methods: {
     loadComponent (pid) {
@@ -32,7 +32,7 @@ export default {
           process.component = Object.create(components[0])
 
           // 注入 process 数据
-          process.component.process = process
+          process.component._ddvMultiWindow = new DdvMultiWindow(this, process.taskId, process)
           // 注入路由
           process.component.router = this.loadComponentRouter(process, process.component)
           // 兼容nuxt的asyncData方法

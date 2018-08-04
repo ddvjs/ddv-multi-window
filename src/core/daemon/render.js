@@ -28,7 +28,7 @@ export default function render (h) {
   return h('div', cloneRenderOptions(this.renderOptions.root, {
     key: 'root',
     attrs: {
-      id: 'dmw_daemon_' + this.id,
+      id: 'dmw_daemon_' + this.daemonId,
       'ddv-multi-window-type': 'root'
     }
   }), children)

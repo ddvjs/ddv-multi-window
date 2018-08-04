@@ -164,41 +164,20 @@ function componentInstall (Vue) {
   Vue.component(MasterView.name, MasterView)
 }
 function RegisterInstanceInstall (Vue) {
-  this.$Vue.mixin({
+  Vue.mixin({
     beforeCreate () {
-      this._ddvProcess = this.$options.process
-
-      if (!this._ddvProcess) {
-        this._ddvProcess = getByParent(this.$parent, '_ddvProcess')
+      if (!this._ddvMultiWindow) {
+        this._ddvMultiWindow = this.$options._ddvMultiWindow || getByParent(this.$parent, '_ddvMultiWindow')
       }
-      if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
-        this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh)
+      if (this._ddvMultiWindow) {
+        this._ddvMultiWindow.register(this)
       }
-
-      const ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow')
-      if (ddvMultiWindow) {
-        this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this)
-      } else if (this._ddvProcess) {
-        this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
-          .then(ddvMultiWindow => {
-            this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this)
-          })
-      }
-      registerInstance(this, this)
-    },
-    created () {
     },
     destroyed () {
-      if (this._ddvMultiWindow && this._ddvMultiWindow.destroy) {
-        this._ddvMultiWindow.destroy()
+      if (this._ddvMultiWindow && this._ddvMultiWindow.unregister) {
+        this._ddvMultiWindow.unregister(this)
+        delete this._ddvMultiWindow
       }
-      if (this._ddvProcess && this._ddvProcess.hook) {
-        this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
-          return this.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
-        })
-      }
-
-      registerInstance(this)
     }
   })
 }
@@ -282,13 +261,6 @@ Object.assign(ps, {
     return (this.options.namespace = value)
   }]
 })
-
-function registerInstance (vm, callVal) {
-  let i = vm.$options._parentVnode
-  if (isDef(i) && isDef(i = i.data) && isDef(i = i.registerDdvMultiWindowInstance)) {
-    i(vm, callVal)
-  }
-}
 
 function setDdvMultiWindow (input) {
   DdvMultiWindow = input
