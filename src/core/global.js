@@ -115,7 +115,15 @@ function vueInstall (Vue, options) {
   // 存储配置项
   this.options = options
   // Vue安装
-  VueInstall.call(this, Vue)
+  // 钩子安装
+  hookInstall.call(this, Vue)
+  // 组件安装
+  componentInstall.call(this, Vue)
+  // 继承安装
+  VuePrototypeInstall.call(this, Vue)
+  // 接口安装
+  RegisterInstanceInstall.call(this, Vue)
+
   if (Vue.prototype.$isServer) {
     // 防止多次重复安装
     this.installing = false
@@ -136,18 +144,6 @@ function vueInstall (Vue, options) {
   this.installing = false
   // 防止多次重复安装
   this.installed = true
-}
-
-function VueInstall (Vue) {
-  Vue = Vue || this.$Vue
-  // 钩子安装
-  hookInstall.call(this, Vue)
-  // 组件安装
-  componentInstall.call(this, Vue)
-  // 继承安装
-  VuePrototypeInstall.call(this, Vue)
-  // 接口安装
-  RegisterInstanceInstall.call(this, Vue)
 }
 
 function hookInstall (Vue) {
