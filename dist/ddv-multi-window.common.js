@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.6
+  * ddv-multi-window v0.1.8
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -23,164 +23,28 @@ function warn (condition, message) {
 
 var inBrowser = typeof window !== 'undefined';
 
-var vueAppMethods = [
-  // 守护进程id
-  'id',
-  // 试图运行
-  'tryRun',
-  // 进程
-  'process',
-  // 错误
-  'onError',
-  // 拖到数据
-  'dragData',
-  // 拖到数据
-  'dragProcess',
-  // 初始化
-  'masterViewInit',
-  // 切换窗口
-  'tabToWindow',
-  // 根据进程id获取窗口
-  'getPidByWindow',
-  // 根据窗口获取进程id
-  'getWindowByPid',
-  // 新窗口打开
-  'openMasterWindow',
-  // 移动到指定窗口
-  'windowAppendChild',
-  // 拖动到别的管理进程窗口
-  'tabMoveMasterWindow',
-  // 还原
-  'closeMasterWindow',
-  'masterMoveParentByTaskId'
-];
-var global;
-function globalInit (g) {
-  global = g;
-}
-function DdvMultiWindow (app, taskId) {
-  this.constructor.apply(this, arguments);
-}
-DdvMultiWindow.prototype = {
-  constructor: constructor,
-  open: open,
-  remove: remove,
-  // 刷新窗口
-  refresh: refresh,
-  close: remove,
-  $getBySelfApp: $getBySelfApp,
-  $destroy: $destroy,
-  back: back,
-  backRefresh: backRefresh,
-  removeBack: removeBack,
-  removeBackRefresh: removeBackRefresh,
-  closeBack: removeBack,
-  closeBackRefresh: removeBackRefresh
-};
-
-vueAppMethods.forEach(function (method) {
-  if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
-    Object.defineProperty(DdvMultiWindow.prototype, method, {
-      get: function get () {
-        assert(this._daemonApp, '多窗口没有初始化');
-        return this._daemonApp[method]
-      },
-      set: function set (value) {
-        assert(this._daemonApp, '多窗口没有初始化');
-        return (this._daemonApp[method] = value)
-      }
-    });
-  }
-});
-
-DdvMultiWindow.prototype.hasOwnProperty('$process') || Object.defineProperty(DdvMultiWindow.prototype, '$process', {
-  get: function get () {
-    return this._selfApp ? this._selfApp._ddvProcess : null
-  }
-});
-
-DdvMultiWindow.prototype.hasOwnProperty('$id') || Object.defineProperty(DdvMultiWindow.prototype, '$id', {
-  get: function get () {
-    return this.$process ? this.$process.id : null
-  }
-});
-
-DdvMultiWindow.prototype.hasOwnProperty('taskId') || Object.defineProperty(DdvMultiWindow.prototype, 'taskId', {
-  get: function get () {
-    return this._taskId ? this._taskId : null
-  }
-});
-
-DdvMultiWindow.prototype.hasOwnProperty('$parent') || Object.defineProperty(DdvMultiWindow.prototype, '$parent', {
-  get: function get () {
-    return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
-  }
-});
-function $destroy () {
-  delete this._daemonApp;
-  delete this._selfApp;
-  delete this._taskId;
+function isDef (v) {
+  return typeof v !== 'undefined'
 }
 
-function $getBySelfApp (app) {
-  return new DdvMultiWindow(this._daemonApp, this._taskId, app)
+function unDefDefault (v, d) {
+  return isDef(v) ? v : d
 }
 
-function open (input) {
-  return this._daemonApp.open(input, this)
+function unDefDefaultByObj (v, d) {
+  Object.keys(d).forEach(function (key) {
+    v[key] = unDefDefault(v[key], d[key]);
+  });
+  return v
 }
 
-function remove (id) {
-  var $id = id || this.$id;
-  return this._daemonApp.remove($id)
-}
-
-function refresh (id) {
-  var $id = id || this.$id;
-  return this._daemonApp.refresh($id)
-}
-
-function back () {
-  return this.$parent && this.tabToWindow(this.$parent.$id)
-}
-
-function backRefresh () {
-  var this$1 = this;
-
-  return this.back().then(function () { return this$1.refresh(this$1.$parent.$id); })
-}
-
-function removeBack () {
-  var this$1 = this;
-
-  return this.back().then(function () { return this$1.remove(); })
-}
-
-function removeBackRefresh () {
-  var this$1 = this;
-
-  return this.backRefresh().then(function () { return this$1.remove(); })
-}
-
-function constructor (daemonApp, taskId, selfApp) {
-  // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
-  process.env.NODE_ENV !== 'production' && assert(
-    global.installed,
-    "not installed. Make sure to call `Vue.use(DdvMultiWindow)` " +
-    "before creating root instance."
-  );
-  process.env.NODE_ENV !== 'production' && assert(
-    inBrowser,
-    "必须有一个window"
-  );
-  this._daemonApp = daemonApp;
-  this._selfApp = selfApp || this._daemonApp;
-  this._taskId = taskId;
+function isFunction (fn) {
+  return typeof fn === 'function'
 }
 
 function Ready (options) {
   if (this instanceof Ready) {
-    return constructor$1.apply(this, arguments)
+    return constructor.apply(this, arguments)
   } else {
     throw new Ready(options)
   }
@@ -190,13 +54,13 @@ Ready.prototype = {
   emitReady: emitReady,
   waitReady: waitReady,
   setIsReady: setIsReady,
-  constructor: constructor$1,
+  constructor: constructor,
   isReadyd: false,
   isReadyCb: void 0,
   initCheckTimeout: 3000,
   initCheckInterval: 100
 };
-function constructor$1 (options) {
+function constructor (options) {
   // 状态检测进程池
   this.promises = [];
   // 状态检测进程池
@@ -271,487 +135,6 @@ function isReadyCheck () {
     }.bind(this))
       .then(function () { return isReadyCheck.call(this) }.bind(this))
   }
-}
-
-function getError (message, name, errorId, stack) {
-  if (this instanceof getError) {
-    return getError(message, name, errorId)
-  } else {
-    var e = new Error(message || 'Unknown Error');
-    e.name = name || errorId || e.name;
-    e.errorId = errorId || e.name;
-    if (stack) {
-      e.stack = e.stack + '\n' + stack;
-    }
-
-    return e
-  }
-}
-function throwError (message, name, isPromise, errorId, stack) {
-  if (isPromise === false) {
-    throw getError(message, name, errorId, stack)
-  } else {
-    return Promise.reject(getError(message, name, errorId, stack))
-  }
-}
-
-// 创建最后总和
-var createNewidSumLast = 0;
-// 创建最后时间
-var createNewidTimeLast = 0;
-function createNewPid (is10) {
-  var r;
-  if (createNewidTimeLast !== time()) {
-    createNewidTimeLast = time();
-    createNewidSumLast = 0;
-  }
-  r = createNewidTimeLast.toString() + (++createNewidSumLast).toString();
-  // 使用36进制
-  if (!is10) {
-    r = parseInt(r, 10).toString(36);
-  }
-  return r
-}
-
-function time () {
-  return parseInt(((new Date()).getTime()) / 1000)
-}
-
-function isFunction (fn) {
-  return typeof fn === 'function'
-}
-
-function argsToArray (args) {
-  return Array.prototype.slice.call(args)
-}
-
-// 获取一个错误对象的方法
-
-Object.assign(EventMessageWindow.prototype, {
-  // 事件头
-  eventName: 'ddvTabSysEventMessage',
-  // 可以接受的
-  targetOrigin: '*'
-}, {
-  on: on,
-  emit: emit,
-  remove: remove$1,
-  destroy: destroy,
-  onCatch: onCatch,
-  receive: receive,
-  postEmit: postEmit,
-  postEmitCall: postEmitCall,
-  decodeMessage: decodeMessage,
-  getMessageEvent: getMessageEvent,
-  setGetContentWindow: setGetContentWindow
-});
-// 窗口消息
-function EventMessageWindow (options) {
-  if (this instanceof EventMessageWindow) {
-    return constructor$2.call(this, options)
-  } else {
-    return new EventMessageWindow(options)
-  }
-}
-// 构造函数
-function constructor$2 (options) {
-  this.eventName = (options.eventName || 'ddvTabSysEventMessage');
-  //
-  this.postMessageType = options.postMessageType || (this.eventName + '#');
-  this.targetOrigin = options.targetOrigin || '*';
-  this.selfWindow = options.selfWindow || this.selfWindow;
-  // 回调进程池
-  this.postEmitCallCbs = {};
-  if (!this.selfWindow) {
-    if (typeof window === 'object' && window === window.window) {
-      this.selfWindow = window;
-    } else {
-      throw getError('options.selfWindow must input', 'OPTIONS_SELFWINDOW_MUST_INPUT')
-    }
-  }
-  this.selfWindow = options.selfWindow || ((typeof window === 'object' && window === window.window) ? window : this.selfWindow);
-  this.setGetContentWindow(options.getContentWindow);
-  if (isFunction(options.onCatch)) {
-    this.onCatch = options.onCatch;
-  }
-  this.onReceives = {};
-  windowEventListener.call(this, this.selfWindow);
-  postEmitCallCbListener.call(this);
-}
-function setGetContentWindow (fn) {
-  if (isFunction(fn)) {
-    this.getContentWindow = fn;
-  } else {
-    this.getContentWindow = function () {
-      return Promise.resolve({ contentWindow: window })
-    };
-  }
-}
-function postEmitCallCbListener () {
-  this.on('postEmitCallCb', function (event) {
-    var id = event.data.id;
-    var res = event.data.res;
-    var error = event.data.error;
-    var stack;
-    if (error && (error.message || error.stack)) {
-      if (error.stack) {
-        stack = '@postEmitCallCb ------postEmitCallCb------\n' + error.stack;
-      }
-      postEmitCallCb.call(this, id, void 0, getError(error.message, error.name, error.errorId, stack));
-    } else {
-      postEmitCallCb.call(this, id, res);
-    }
-  }.bind(this));
-}
-function postEmitCallCb (id, res, e) {
-  if (this.postEmitCallCbs[id]) {
-    if (e) {
-      this.postEmitCallCbs[id][1](e);
-    } else {
-      this.postEmitCallCbs[id][0](res);
-    }
-    delete this.postEmitCallCbs[id];
-  } else {
-    console.debug('不存在');
-  }
-}
-// 发送信息
-function postEmitCall (type, data, win, transfer) {
-  return new Promise(function (resolve, reject) {
-    var id = createNewPid();
-    this.postEmitCallCbs[id] = [resolve, reject];
-    this.postEmit(type, data, win, transfer, id, true)
-      .then(function () {
-        id = resolve = reject = void 0;
-      }, function (e) {
-        postEmitCallCb.call(this, id, void 0, e);
-        id = resolve = reject = e = void 0;
-      }.bind(this));
-  }.bind(this))
-}
-// 发送信息
-function postEmit (type, data, win, transfer, id, isCb) {
-  var res, args, isPM, postMessage, contentWindow, targetOrigin;
-  if (typeof win === 'object') {
-    res = win;
-  } else {
-    args = argsToArray(arguments);
-    type = data = res = transfer = id = isCb = void 0;
-    // 获取 window 对象
-    return this.getContentWindow(win)
-      .then(function (res) {
-        args[2] = res;
-        res = args;
-        args = void 0;
-        return postEmit.apply(this, res)
-      }.bind(this))
-  }
-  id = id || createNewPid();
-  // 序列化
-  var message = JSON.stringify({
-    id: id,
-    type: type,
-    data: data,
-    isCb: isCb || false
-  });
-  try {
-    // 试图获取 postMessage
-    postMessage = res.postMessage || void 0;
-    // 试图获取 targetOrigin
-    targetOrigin = res.targetOrigin || void 0;
-    // 试图获取 contentWindow
-    contentWindow = res.contentWindow || res;
-    // 如果获取 contentWindow 成功，
-    // 并且contentWindow中有postMessage
-    // 并且res要求使用isPostMessage时
-    if (contentWindow && typeof contentWindow.postMessage === 'function' && res.isPostMessage) {
-      // 强制使用 postMessage
-      postMessage = contentWindow.postMessage.bind(contentWindow);
-    }
-    // 是否试图获取成功 postMessage
-    isPM = typeof postMessage === 'function';
-  } catch (e) {
-    contentWindow = res;
-  }
-  if (!targetOrigin) {
-    targetOrigin = this.targetOrigin || '*';
-  }
-
-  if (isPM) {
-    try {
-      // isPostMessage为需要发送，如果存在postMessage方法，就使用postMessage发送事件
-      postMessage(this.postMessageType + message, targetOrigin, transfer);
-      return Promise.resolve(id)
-    } catch (e) {
-    }
-  }
-  // 试图使用调用模式传递
-  if (postMessageCall.call(this, contentWindow, message)) {
-    return Promise.resolve(id)
-  }
-  // 试图使用事件模式广播
-  if (postMessageEvent.call(this, contentWindow, message)) {
-    return Promise.resolve(id)
-  }
-
-  try {
-    // 如果contentWindow存在postMessage方法，并且不是postMessage发送事件
-    if (contentWindow && contentWindow.postMessage && contentWindow.postMessage !== postMessage) {
-      // 尝试使用contentWindow.postMessage发送
-      contentWindow.postMessage(this.postMessageType + message, targetOrigin, transfer);
-      return Promise.resolve(id)
-    }
-  } catch (e) {
-    return Promise.reject(e)
-  }
-  return Promise.reject(getError('postMessage fail', 'POST_MESSAGE_FAIL'))
-}
-// 试图使用调用模式传递
-function postMessageCall (contentWindow, message) {
-  var event;
-  try {
-    // 如果contentWindow.onDdvMultiWindowEMCall存在this.eventName方法
-    if (typeof contentWindow.onDdvMultiWindowEMCall === 'object' && typeof contentWindow.onDdvMultiWindowEMCall[this.eventName] === 'function') {
-      event = this.getMessageEvent(this.eventName, { data: message });
-      // 尝试使用contentWindow.onDdvMultiWindowEMCall的this.eventName发送
-      return contentWindow.onDdvMultiWindowEMCall[this.eventName](event) && true
-    }
-  } catch (e) {
-  }
-}
-// 试图使用事件模式广播
-function postMessageEvent (contentWindow, message) {
-  var event;
-  try {
-    event = this.getMessageEvent(this.eventName, { data: message });
-    try {
-      // isPostMessage为需要发送，如果存在dispatchEvent方法，就使用dispatchEvent发送事件
-      if (typeof contentWindow.dispatchEvent === 'function') {
-        contentWindow.dispatchEvent(event);
-        // 标记发送完毕，不需要再次发送
-        return true
-      }
-    } catch (e) {
-    }
-    try {
-      // isPostMessage为需要发送，如果存在fireEvent方法，就使用fireEvent发送事件
-      if (typeof contentWindow.fireEvent === 'function') {
-        contentWindow.fireEvent('on' + this.eventName, event);
-        // 标记发送完毕，不需要再次发送
-        return true
-      }
-    } catch (e) {
-    }
-  } catch (e) {
-  }
-  return false
-}
-// 移除监听
-function remove$1 (type, fn) {
-  var this$1 = this;
-
-  if (typeof type === 'function') {
-    fn = type;
-    for (var key in this$1.onReceives) {
-      if (this$1.onReceives.hasOwnProperty(key)) {
-        this$1.remove(key, fn);
-      }
-    }
-  } else if (typeof type === 'string') {
-    if (typeof fn === 'function') {
-      for (var i = 0; i < this.onReceives[type].length; i++) {
-        // 如果是数组，并且是这个方法
-        if (Array.isArray(this$1.onReceives[type]) && this$1.onReceives[type][i] === fn) {
-          // 切除
-          this$1.onReceives[type].splice(i, 1);
-          // i 往后退1
-          i--;
-        }
-      }
-    } else {
-      delete this.onReceives[type];
-    }
-  }
-}
-// 触发
-function emit (event) {
-  var this$1 = this;
-
-  var e;
-  if (!event.type) {
-    e = getError('Message type error', 'MESSAGE_TYPE_ERROR');
-    e.isDecodeError = true;
-    return Promise.reject(e)
-  }
-  var events = this.onReceives[event.type] || [];
-  for (var i = 0; i < events.length; i++) {
-    emitFn.call({
-      isCb: false,
-      event: event,
-      postEmit: postEmit.bind(this$1)
-    }, events[i]);
-  }
-  event = void 0;
-}
-// 触发
-function emitFn (fn) {
-  return (new Promise(function (resolve, reject) {
-    var res = fn(this.event);
-    if (isFunction(res.then)) {
-      this.isCb = true;
-      res.then(resolve, reject);
-    } else if (res) {
-      this.isCb = true;
-      resolve(res);
-    } else {
-      resolve();
-    }
-    resolve = reject = void 0;
-  }.bind(this)))
-    .then(function (res) {
-      return this.isCb && this.event && this.event.id && this.postEmit('postEmitCallCb', {
-        id: this.event.id,
-        res: res
-      }, {
-        contentWindow: this.event.source
-      })
-    }.bind(this), function (e) {
-      return this.isCb && this.event && this.event.id && this.postEmit('postEmitCallCb', {
-        id: this.event.id,
-        error: {
-          name: e.name || void 0,
-          stack: e.stack || void 0,
-          message: e.message || void 0,
-          errorId: e.errorId || void 0
-        }
-      }, {
-        contentWindow: this.event.source
-      })
-    }.bind(this))
-}
-// 监听
-function on (type, fn) {
-  if (!Array.isArray(this.onReceives[type])) {
-    this.onReceives[type] = [];
-  }
-  this.onReceives[type].push(fn);
-}
-// 解密数据
-function decodeMessage (input) {
-  var data;
-  if (typeof input !== 'string') {
-    // 必须是字符串
-    return Promise.reject(getError('Input must be a string', 'INPUT_MUST_STRING'))
-  }
-  try {
-    data = JSON.parse(input);
-  } catch (e) {
-    return Promise.reject(getError('window not found', 'WINDOW_NOT_FINT'))
-  }
-  // 直接返回承诺
-  return Promise.resolve(data)
-}
-// 获取一个标准的消息事件
-function getMessageEvent (type, eventInit) {
-  var event;
-  eventInit = typeof eventInit === 'object' ? eventInit : Object.create(null);
-  eventInit.source = eventInit.source || this.selfWindow;
-  eventInit.origin = eventInit.origin || this.selfWindow.origin || (this.selfWindow.location && this.selfWindow.location.origin);
-
-  try {
-    if (typeof MessageEvent === 'function') {
-      event = new MessageEvent(type, eventInit);
-    } else {
-      event = new Event(type, eventInit);
-    }
-  } catch (e) {
-    event = eventInit;
-  }
-  'source origin ports data id isCb'.split(' ').forEach(function (key) {
-    try {
-      if (eventInit[key] && event[key] !== eventInit[key]) {
-        event[key] = eventInit[key];
-      }
-    } catch (e) {
-
-    }
-  });
-  return event
-}
-
-function receiveMessage (event) {
-  var input = event.data || void 0;
-  if (typeof input !== 'string' || input.substr(0, this.postMessageType.length) !== this.postMessageType) {
-    // 必须是字符串，并且满足基本需求
-    return void 0
-  }
-  // 解析数据
-  return this.receive(event, input.substr(this.postMessageType.length))
-}
-function receiveCall (event) {
-  try {
-    this.receive(event);
-  } catch (e) {
-    return false
-  }
-  return true
-}
-function receiveEvent (event) {
-  return this.receive(event)
-}
-function receive (event, data) {
-  // 解析数据
-  return this.decodeMessage(data || event.data || void 0)
-    .then(function (data) {
-      var e = this.getMessageEvent(data.type, Object.assign(Object.create(null), {
-        source: event.source,
-        origin: event.origin
-      }, data));
-      return this.emit(e)
-    }.bind(this), function (e) {
-      e.isDecodeError = true;
-      return this.onCatch(e)
-    }.bind(this))
-}
-// 监听绑定
-function windowEventListener (contentWindow) {
-  if (contentWindow.addEventListener) { // all browsers except IE before version 9
-    contentWindow.addEventListener('message', receiveMessage.bind(this), false);
-    contentWindow.addEventListener(this.eventName, receiveEvent.bind(this), false);
-  } else if (contentWindow.attachEvent) { // IE before version 9
-    contentWindow.attachEvent('onmessage', receiveMessage.bind(this));
-    contentWindow.attachEvent('on' + this.eventName, receiveEvent.bind(this));
-  }
-  try {
-    if (typeof contentWindow.onDdvMultiWindowEMCall !== 'object') {
-      contentWindow.onDdvMultiWindowEMCall = Object.create(null);
-    }
-    contentWindow.onDdvMultiWindowEMCall[this.eventName] = receiveCall.bind(this);
-  } catch (e) {
-  }
-  return Promise.resolve()
-}
-// 默认异常处理
-function onCatch (e) {
-  return Promise.reject(e)
-}
-function destroy () {
-
-}
-
-function isDef (v) {
-  return typeof v !== 'undefined'
-}
-
-function unDefDefault (v, d) {
-  return isDef(v) ? v : d
-}
-
-function unDefDefaultByObj (v, d) {
-  Object.keys(d).forEach(function (key) {
-    v[key] = unDefDefault(v[key], d[key]);
-  });
-  return v
 }
 
 var $ = require('jquery');
@@ -1516,7 +899,7 @@ function render (h) {
   return h('div', cloneRenderOptions(this.renderOptions.root, {
     key: 'root',
     attrs: {
-      id: 'dmw_daemon_' + this.id,
+      id: 'dmw_daemon_' + this.daemonId,
       'ddv-multi-window-type': 'root'
     }
   }), children)
@@ -1752,9 +1135,6 @@ var base = {
     }
   },
   computed: {
-    id: function id () {
-      return this.daemonId
-    },
     // 初始化完毕
     ready: function ready () {
       return this.process.daemon.init
@@ -1799,6 +1179,28 @@ var base = {
 
 function sleep (timeout) {
   return new Promise(function (resolve) { return setTimeout(resolve, timeout); })
+}
+
+function getError (message, name, errorId, stack) {
+  if (this instanceof getError) {
+    return getError(message, name, errorId)
+  } else {
+    var e = new Error(message || 'Unknown Error');
+    e.name = name || errorId || e.name;
+    e.errorId = errorId || e.name;
+    if (stack) {
+      e.stack = e.stack + '\n' + stack;
+    }
+
+    return e
+  }
+}
+function throwError (message, name, isPromise, errorId, stack) {
+  if (isPromise === false) {
+    throw getError(message, name, errorId, stack)
+  } else {
+    return Promise.reject(getError(message, name, errorId, stack))
+  }
 }
 
 function findOrSleepCall (obj, refName, tryNumMax, tryNum) {
@@ -1983,6 +1385,28 @@ var api = {
       return Promise.resolve()
     }
   }
+}
+
+// 创建最后总和
+var createNewidSumLast = 0;
+// 创建最后时间
+var createNewidTimeLast = 0;
+function createNewPid (is10) {
+  var r;
+  if (createNewidTimeLast !== time()) {
+    createNewidTimeLast = time();
+    createNewidSumLast = 0;
+  }
+  r = createNewidTimeLast.toString() + (++createNewidSumLast).toString();
+  // 使用36进制
+  if (!is10) {
+    r = parseInt(r, 10).toString(36);
+  }
+  return r
+}
+
+function time () {
+  return parseInt(((new Date()).getTime()) / 1000)
 }
 
 var apiUtil = {
@@ -2546,9 +1970,9 @@ var apiAction = {
           }
           options.options = input;
         });
-        // 还是没有src，当是在进程中找到
-        if (!options.src && parentDdvMultiWindow.$id && this.process[parentDdvMultiWindow.$id]) {
-          var task = this.process[parentDdvMultiWindow.$id];
+        // 还是没有src
+        if (!options.src && parentDdvMultiWindow.$process) {
+          var task = parentDdvMultiWindow.$process;
           var route = task.route;
           var src$1 = route.path;
 
@@ -2819,7 +2243,7 @@ var handle = {
         })
         .then(function () {
           // 移动窗口到
-          return this$1.$ddvMultiWindow.windowAppendChild({
+          return this$1.windowAppendChild({
             id: id,
             taskId: process.taskId
           })
@@ -2902,7 +2326,7 @@ var handle = {
       var item = this.$ddvMultiWindowGlobal.map[this.daemonId];
       return Promise.all(this.taskIds.map(function (taskId) {
         if (!item.api[taskId]) {
-          item.api[taskId] = new DdvMultiWindow(item.app, taskId);
+          item.api[taskId] = new DdvMultiWindow$1(item.app, taskId);
         }
       }).concat(Object.keys(item.api || {}).map(function (taskId) {
         this$1.taskIds.indexOf(taskId) > -1 || this$1.$delete(item.api, taskId);
@@ -3127,7 +2551,7 @@ var tabRouter = {
           process.component = Object.create(components[0]);
 
           // 注入 process 数据
-          process.component.process = process;
+          process.component._ddvMultiWindow = new DdvMultiWindow$1(this$1, process.taskId, process);
           // 注入路由
           process.component.router = this$1.loadComponentRouter(process, process.component);
           // 兼容nuxt的asyncData方法
@@ -3351,151 +2775,155 @@ var ErrorComponent$1 = {
 }
 
 var $$3 = require('jquery');
-var master = {
-  name: 'ddv-multi-window-master',
-  props: {
-    daemonId: {
-      type: [Number, String],
-      default: 'daemon'
-    },
-    view: {
-      type: String,
-      default: 'view'
-    },
-    autoColse: {
-      type: Boolean,
-      default: true
-    }
-  },
-  data: function data () {
-    return {
-      ddvMultiWindowReady: false,
-      refReady: false,
-      error: null,
-      init: false,
-      wrap: null,
-      $wrap: null
-    }
-  },
-  render: function render (h) {
-    var children = [];
-    if (this.error) {
-      children.push(h(ErrorComponent$1, {
-        key: 'error',
-        attrs: {
-          'ddv-multi-window-type': 'errorBox'
-        },
-        props: {
-          view: this.view,
-          error: this.error
-        }
-      }));
-    } else if (!this.init) {
-      children.push(h(LoadComponent, {
-        key: 'load'
-      }));
-    }
-    return h('div', {
-      key: 'master',
-      ref: 'm',
-      attrs: {
-        id: 'dmw_master_' + this.view + this.id,
-        'ddv-multi-window-type': 'master' + this.view
+var Master = getOptions()
+
+function getOptions (name, view) {
+  return {
+    name: name || 'ddv-multi-window-master',
+    props: {
+      daemonId: {
+        type: [Number, String],
+        default: 'daemon'
+      },
+      view: {
+        type: String,
+        default: view || 'view'
+      },
+      autoColse: {
+        type: Boolean,
+        default: true
       }
-    }, children)
-  },
-  methods: {
-    masterInit: function masterInit () {
-      var this$1 = this;
-
-      // master进程的id
-      this.$ddvMultiWindowGlobal.masterInit(this)
-        .then(function () {
-          this$1.$ddvMultiWindow.onDaemonClose = this$1.onDaemonClose.bind(this$1);
-          // 标记初始化完毕
-          this$1.ddvMultiWindowReady = true;
-        }, function (e) {
-          console.error(e);
-          this$1.error = e;
-        });
     },
-    refReadyInit: function refReadyInit () {
-      var this$1 = this;
-
-      return Promise.resolve()
-        .then(function () {
-          if (!this$1.wrap) {
-            return findOrSleepCall(this$1.$refs, 'm')
-              .then(function (ref) {
-                ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
-                this$1.wrap = ref;
-                this$1.$wrap = $$3(this$1.wrap);
-              })
+    data: function data () {
+      return {
+        ddvMultiWindowReady: false,
+        refReady: false,
+        error: null,
+        init: false,
+        wrap: null,
+        $wrap: null
+      }
+    },
+    render: function render (h) {
+      var children = [];
+      if (this.error) {
+        children.push(h(ErrorComponent$1, {
+          key: 'error',
+          attrs: {
+            'ddv-multi-window-type': 'errorBox'
+          },
+          props: {
+            view: this.view,
+            error: this.error
           }
-        }).then(function () {
-          this$1.refReady = true;
-        })
-    },
-    closeWindow: function closeWindow () {
-      try {
-        this.contentWindow.close();
-      } catch (e) {
-        try {
-          window.close();
-        } catch (e) { }
+        }));
+      } else if (!this.init) {
+        children.push(h(LoadComponent, {
+          key: 'load'
+        }));
       }
+      return h('div', {
+        key: 'master',
+        ref: 'm',
+        attrs: {
+          id: 'dmw_master_' + this.view + this.daemonId,
+          'ddv-multi-window-type': 'master' + this.view
+        }
+      }, children)
     },
-    closeMasterWindow: function closeMasterWindow () {
-      try {
-        this.$ddvMultiWindow.closeMasterWindow(this.taskId, 5000);
-      } catch (e) {
-        this.closeWindow();
-      }
-    },
-    masterViewInit: function masterViewInit () {
-      var this$1 = this;
+    methods: {
+      masterInit: function masterInit () {
+        var this$1 = this;
 
-      if (this.masterReady) {
-        var cw = this.contentWindow;
-        cw.addEventListener('close', this.closeMasterWindow.bind(this));
-        cw.addEventListener('unload', this.closeMasterWindow.bind(this));
-        this.$ddvMultiWindow.masterViewInit(this.view, this.taskId, this.$wrap)
+        // master进程的id
+        this.$ddvMultiWindowGlobal.masterInit(this)
           .then(function () {
-            this$1.init = true;
+            this$1.$ddvMultiWindow.onDaemonClose = this$1.onDaemonClose.bind(this$1);
+            // 标记初始化完毕
+            this$1.ddvMultiWindowReady = true;
+          }, function (e) {
+            console.error(e);
+            this$1.error = e;
           });
+      },
+      refReadyInit: function refReadyInit () {
+        var this$1 = this;
+
+        return Promise.resolve()
+          .then(function () {
+            if (!this$1.wrap) {
+              return findOrSleepCall(this$1.$refs, 'm')
+                .then(function (ref) {
+                  ref = Array.isArray(ref) ? ref[0] : (ref && ref[0]) || ref;
+                  this$1.wrap = ref;
+                  this$1.$wrap = $$3(this$1.wrap);
+                })
+            }
+          }).then(function () {
+            this$1.refReady = true;
+          })
+      },
+      closeWindow: function closeWindow () {
+        try {
+          this.contentWindow.close();
+        } catch (e) {
+          try {
+            window.close();
+          } catch (e) { }
+        }
+      },
+      closeMasterWindow: function closeMasterWindow () {
+        try {
+          this.$ddvMultiWindow.closeMasterWindow(this.taskId, 5000);
+        } catch (e) {
+          this.closeWindow();
+        }
+      },
+      masterViewInit: function masterViewInit () {
+        var this$1 = this;
+
+        if (this.masterReady) {
+          var cw = this.contentWindow;
+          cw.addEventListener('close', this.closeMasterWindow.bind(this));
+          cw.addEventListener('unload', this.closeMasterWindow.bind(this));
+          this.$ddvMultiWindow.masterViewInit(this.view, this.taskId, this.$wrap)
+            .then(function () {
+              this$1.init = true;
+            });
+        }
+      },
+      onDaemonClose: function onDaemonClose () {
+        var this$1 = this;
+
+        this.$ddvMultiWindow.masterMoveParentByTaskId(this.taskId);
+        this.error = new Error('主窗口被关闭');
+        this.autoColse && setTimeout(function () {
+          this$1.closeWindow();
+        }, 1500);
       }
     },
-    onDaemonClose: function onDaemonClose () {
-      var this$1 = this;
-
-      this.$ddvMultiWindow.masterMoveParentByTaskId(this.taskId);
-      this.error = new Error('主窗口被关闭');
-      this.autoColse && setTimeout(function () {
-        this$1.closeWindow();
-      }, 1500);
-    }
-  },
-  computed: {
-    taskId: function taskId () {
-      return this.ddvMultiWindowReady ? this.$ddvMultiWindow.taskId : null
+    computed: {
+      taskId: function taskId () {
+        return this.ddvMultiWindowReady ? this.$ddvMultiWindow.taskId : null
+      },
+      contentWindow: function contentWindow () {
+        return this.$ddvMultiWindowGlobal.contentWindow
+      },
+      masterReady: function masterReady () {
+        return this.refReady && this.ddvMultiWindowReady
+      }
     },
-    contentWindow: function contentWindow () {
-      return this.$ddvMultiWindowGlobal.contentWindow
+    watch: {
+      masterReady: {
+        handler: 'masterViewInit'
+      }
     },
-    masterReady: function masterReady () {
-      return this.refReady && this.ddvMultiWindowReady
+    created: function created () {
+      this.$isServer || this.masterInit();
+    },
+    mounted: function mounted () {
+      this.$isServer || this.refReadyInit();
     }
-  },
-  watch: {
-    masterReady: {
-      handler: 'masterViewInit'
-    }
-  },
-  created: function created () {
-    this.$isServer || this.masterInit();
-  },
-  mounted: function mounted () {
-    this.$isServer || this.refReadyInit();
   }
 }
 
@@ -3512,45 +2940,9 @@ var DmwButton = {
   }
 }
 
-var MasterTask = {
-  name: 'ddv-multi-window-task',
-  functional: true,
-  props: {
-    daemonId: {
-      type: [Number, String],
-      default: 'daemon'
-    }
-  },
-  render: function render (h, ref) {
-    var data = ref.data;
-    var children = ref.children;
-    var props = ref.props;
+var MasterTask = getOptions('ddv-multi-window-task', 'task')
 
-    props.view = 'task';
-    data.props = props;
-    return h(master, data, children)
-  }
-}
-
-var MasterView = {
-  name: 'ddv-multi-window-view',
-  functional: true,
-  props: {
-    daemonId: {
-      type: [Number, String],
-      default: 'daemon'
-    }
-  },
-  render: function render (h, ref) {
-    var data = ref.data;
-    var children = ref.children;
-    var props = ref.props;
-
-    props.view = 'view';
-    data.props = props;
-    return h(master, data, children)
-  }
-}
+var MasterView = getOptions('ddv-multi-window-view', 'view')
 
 function getByParent (parent, key) {
   parent = parent || this;
@@ -3564,41 +2956,23 @@ function getByParent (parent, key) {
   }
 }
 
-var _Vue;
-var DdvMultiWindowGlobal = function DdvMultiWindowGlobal () {
-  this.Vue = null;
-};
-DdvMultiWindowGlobal.prototype.masterInit = function masterInit (app) {
-    var this$1 = this;
+var dp = DdvMultiWindowGlobal.prototype = Object.create(null);
+var hp = Object.hasOwnProperty;
+var ps = Object.create(null);
+var global = new DdvMultiWindowGlobal();
 
-  if (this.Vue.prototype.$isServer) {
-    return
-  }
-  if (!this.installed) {
-    throw getError('not installed. Make sure to call `Vue.use(DdvMultiWindow)`before creating root instance.')
-  }
-  if (!app) {
-    throw getError('必须传入app实例')
-  }
-  var ddvMultiWindow = getByParent(app, '_ddvMultiWindow');
-  if (ddvMultiWindow) {
-    return Promise.resolve(ddvMultiWindow)
-  }
-  var daemonId = app.daemonId;
-
-  return this.get(daemonId)
-    .then(function (ddvMultiWindow) {
-      try {
-        if (this$1.contentWindow && ddvMultiWindow) {
-          this$1.contentWindow.name = ddvMultiWindow.taskId;
-        }
-      } catch (e) {}
-      app._ddvMultiWindow = ddvMultiWindow;
-      return ddvMultiWindow
-    })
-};
-DdvMultiWindowGlobal.prototype.daemonInit = function daemonInit (app) {
-  if (this.Vue.prototype.$isServer) {
+Object.assign(global, {
+  get: get,
+  isDaemon: true,
+  version: '0.1.8',
+  Ready: Ready,
+  install: vueInstall,
+  installed: false,
+  daemonInit: daemonInit,
+  masterInit: masterInit
+});
+function daemonInit (app) {
+  if (this.$isServer) {
     return
   }
   var daemonId = app.daemonId;
@@ -3613,8 +2987,40 @@ DdvMultiWindowGlobal.prototype.daemonInit = function daemonInit (app) {
   }
   var ddvMultiWindow = app._ddvMultiWindow = this.get(daemonId, 'daemon', 0);
   return ddvMultiWindow
-};
-DdvMultiWindowGlobal.prototype.get = function get (daemonId, taskId, tryNumMax, tryNum) {
+}
+function masterInit (app) {
+  var this$1 = this;
+
+  if (this.$isServer) {
+    return
+  }
+  if (!this.installed) {
+    throw getError('not installed. Make sure to call `Vue.use(DdvMultiWindow)`before creating root instance.')
+  }
+  if (!app) {
+    throw getError('必须传入app实例')
+  }
+  var daemonId = app.daemonId;
+
+  return this.get(daemonId)
+    .then(function (ddvMultiWindow) {
+      try {
+        if (this$1.contentWindow && ddvMultiWindow) {
+          this$1.contentWindow.name = ddvMultiWindow.taskId;
+        }
+      } catch (e) {}
+      app._ddvMultiWindow = ddvMultiWindow;
+      return ddvMultiWindow
+    }, function (e) {
+      var ddvMultiWindow;
+      if (e.name === 'DAEMONID_NOT_EXIST' && (ddvMultiWindow = getByParent(app, '_ddvMultiWindow'))) {
+        return ddvMultiWindow
+      } else {
+        return Promise.reject(e)
+      }
+    })
+}
+function get (daemonId, taskId, tryNumMax, tryNum) {
   var isPromise = tryNumMax !== 0;
   if (!this.installed) {
     return throwError('not installed. Make sure to call `Vue.use(DdvMultiWindow)`before creating root instance.', 'MUST_VUE_USE_DDV_MULTI_WINDOW', isPromise)
@@ -3645,17 +3051,25 @@ DdvMultiWindowGlobal.prototype.get = function get (daemonId, taskId, tryNumMax, 
     }
     return item.api[taskId]
   }
-};
-DdvMultiWindowGlobal.prototype.install = function install (Vue, options) {
-  if ((this.installing || this.installed) && this.Vue === Vue) { return }
+}
+function vueInstall (Vue, options) {
+  if ((this.installing || this.installed) && this.$Vue === Vue) { return }
   // 防止多次重复安装
   this.installing = true;
   // 保存当前安装的vue
-  this.Vue = Vue;
+  this.$Vue = Vue;
   // 存储配置项
   this.options = options;
   // Vue安装
-  this.VueInstall(Vue);
+  // 钩子安装
+  hookInstall.call(this, Vue);
+  // 组件安装
+  componentInstall.call(this, Vue);
+  // 继承安装
+  VuePrototypeInstall.call(this, Vue);
+  // 接口安装
+  RegisterInstanceInstall.call(this, Vue);
+
   if (Vue.prototype.$isServer) {
     // 防止多次重复安装
     this.installing = false;
@@ -3665,33 +3079,86 @@ DdvMultiWindowGlobal.prototype.install = function install (Vue, options) {
     return
   }
   // 初始化
-  this.optionsInstall();
+  optionsInstall.call(this);
   // 初始化
-  this.daemonWindowInstall();
+  daemonWindowInstall.call(this);
   // 全局注册
-  this.namespaceReg();
+  namespaceReg.call(this);
   // 存储初始化
-  this.mapInstall();
+  mapInstall.call(this);
   // 防止多次重复安装
   this.installing = false;
   // 防止多次重复安装
   this.installed = true;
-};
-DdvMultiWindowGlobal.prototype.mapInstall = function mapInstall () {
-  if (this.map) {
-    return
+}
+
+function hookInstall (Vue) {
+  // 管理状态
+  var strats = Vue.config.optionMergeStrategies;
+  // 对窗口挂钩使用相同的钩子合并策略
+  strats.beforeDdvMultiWindowOpen = strats.ddvMultiWindowOpened = strats.beforeDdvMultiWindowRemove = strats.ddvMultiWindowRemoved = strats.beforeDdvMultiWindowRefresh = strats.ddvMultiWindowRefreshed = strats.created;
+}
+function componentInstall (Vue) {
+  // 安装组件
+  Vue.component(TaskComponent.name, TaskComponent);
+  Vue.component(Daemon.name, Daemon);
+  Vue.component(button.name, button);
+  Vue.component(Master.name, Master);
+  Vue.component(DmwButton.name, DmwButton);
+  Vue.component(MasterTask.name, MasterTask);
+  Vue.component(MasterView.name, MasterView);
+}
+function RegisterInstanceInstall (Vue) {
+  Vue.mixin({
+    beforeCreate: function beforeCreate () {
+      if (!this._ddvMultiWindow) {
+        this._ddvMultiWindow = this.$options._ddvMultiWindow || getByParent(this.$parent, '_ddvMultiWindow');
+      }
+      if (this._ddvMultiWindow) {
+        this._ddvMultiWindow.register(this);
+      }
+    },
+    destroyed: function destroyed () {
+      if (this._ddvMultiWindow && this._ddvMultiWindow.unregister) {
+        this._ddvMultiWindow.unregister(this);
+        delete this._ddvMultiWindow;
+      }
+    }
+  });
+}
+function VuePrototypeInstall (Vue) {
+  var this$1 = this;
+
+  hp(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
+    get: function get () {
+      if (!this._ddvMultiWindow) {
+        this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow');
+      }
+      if (!this._ddvMultiWindow) {
+        throw getError('Not initialized')
+      } else {
+        return this._ddvMultiWindow
+      }
+    }
+  });
+  hp(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
+    get: function () { return this$1; }
+  });
+}
+function optionsInstall () {
+  this.options = unDefDefaultByObj((this.options || {}), {
+    // 命名空间
+    namespace: '__DDV_MULTI_WINDOW__'
+  });
+}
+
+function namespaceReg (name) {
+  name = name || this.options.namespace;
+  if (!this.contentWindow[name]) {
+    this.contentWindow[name] = this;
   }
-  if (this.contentWindow === this.daemonWindow) {
-    this.map = Object.create(null);
-  } else if (this.daemonWindow && this.daemonWindow[this.namespace]) {
-    this.map = this.daemonWindow[this.namespace].map || this.map;
-  }
-  if (!this.map) {
-    throw getError('Initialization failed, check if the \'options.namespace\' is consistent with the daemon window')
-  }
-  // this.Vue.util.defineReactive(this.Vue.prototype, 'ddvMultiWindowGlobalMap', this.map)
-};
-DdvMultiWindowGlobal.prototype.daemonWindowInstall = function daemonWindowInstall () {
+}
+function daemonWindowInstall () {
   if (!this.options.window) {
     // 如果传入窗口，试图自动获取
     this.options.window = typeof window === void 0 ? this.options.window : window;
@@ -3710,136 +3177,695 @@ DdvMultiWindowGlobal.prototype.daemonWindowInstall = function daemonWindowInstal
   } catch (e) {
     warn(false, '守护窗口保存失败');
   }
-};
-DdvMultiWindowGlobal.prototype.optionsInstall = function optionsInstall () {
-  this.options = unDefDefaultByObj((this.options || {}), {
-    // 命名空间
-    namespace: '__DDV_MULTI_WINDOW__'
-  });
-};
-DdvMultiWindowGlobal.prototype.namespaceReg = function namespaceReg (name) {
-  name = name || this.options.namespace;
-  if (!this.contentWindow[name]) {
-    this.contentWindow[name] = this;
+}
+function mapInstall () {
+  if (this.map) {
+    return
   }
-};
-DdvMultiWindowGlobal.prototype.VueInstall = function VueInstall (Vue) {
-  Vue = Vue || this.Vue;
-  // 钩子安装
-  this.hookInstall(Vue);
-  // 组件安装
-  this.componentInstall(Vue);
-  // 继承安装
-  this.VuePrototypeInstall(Vue);
-  // 接口安装
-  this.RegisterInstanceInstall(Vue);
-};
-DdvMultiWindowGlobal.prototype.hookInstall = function hookInstall (Vue) {
-  // 管理状态
-  var strats = Vue.config.optionMergeStrategies;
-  // 对窗口挂钩使用相同的钩子合并策略
-  strats.beforeDdvMultiWindowOpen = strats.ddvMultiWindowOpened = strats.beforeDdvMultiWindowRemove = strats.ddvMultiWindowRemoved = strats.beforeDdvMultiWindowRefresh = strats.ddvMultiWindowRefreshed = strats.created;
-};
-DdvMultiWindowGlobal.prototype.componentInstall = function componentInstall (Vue) {
-  // 安装组件
-  Vue.component(TaskComponent.name, TaskComponent);
-  Vue.component(Daemon.name, Daemon);
-  Vue.component(button.name, button);
-  Vue.component(master.name, master);
-  Vue.component(DmwButton.name, DmwButton);
-  Vue.component(MasterTask.name, MasterTask);
-  Vue.component(MasterView.name, MasterView);
-};
-DdvMultiWindowGlobal.prototype.RegisterInstanceInstall = function RegisterInstanceInstall (Vue) {
-  this.Vue.mixin({
-    beforeCreate: function beforeCreate () {
-        var this$1 = this;
-
-      this._ddvProcess = this.$options.process;
-
-      if (!this._ddvProcess) {
-        this._ddvProcess = getByParent(this.$parent, '_ddvProcess');
-      }
-      if (this._ddvProcess && this.$options.beforeDdvMultiWindowRefresh && this.$options.beforeDdvMultiWindowRefresh.length) {
-        this._ddvProcess.hook.beforeRefresh.push.apply(this._ddvProcess.hook.beforeRefresh, this.$options.beforeDdvMultiWindowRefresh);
-      }
-
-      var ddvMultiWindow = getByParent(this.$parent, '_ddvMultiWindow');
-      if (ddvMultiWindow) {
-        this._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this);
-      } else if (this._ddvProcess) {
-        this.$ddvMultiWindowGlobal.get(this._ddvProcess.daemonId, this._ddvProcess.taskId)
-          .then(function (ddvMultiWindow) {
-            this$1._ddvMultiWindow = ddvMultiWindow.$getBySelfApp(this$1);
-          });
-      }
-      registerInstance(this, this);
-    },
-    created: function created () {
-    },
-    destroyed: function destroyed () {
-        var this$1 = this;
-
-      if (this._ddvMultiWindow && this._ddvMultiWindow.$destroy) {
-        this._ddvMultiWindow.$destroy();
-      }
-      if (this._ddvProcess && this._ddvProcess.hook) {
-        this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(function (fn) {
-          return this$1.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
-        });
-      }
-
-      registerInstance(this);
-    }
-  });
-};
-DdvMultiWindowGlobal.prototype.VuePrototypeInstall = function VuePrototypeInstall (Vue) {
-    var this$1 = this;
-
-  Vue.prototype.hasOwnProperty('$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
-    get: function get () {
-      if (!this._ddvMultiWindow) {
-        this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow');
-      }
-      if (!this._ddvMultiWindow) {
-        throw getError('Not initialized')
-      } else {
-        return this._ddvMultiWindow
-      }
-    }
-  });
-  Vue.prototype.hasOwnProperty('$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
-    get: function () { return this$1; }
-  });
-};
-DdvMultiWindowGlobal.prototype.hasOwnProperty('namespace') || Object.defineProperty(DdvMultiWindowGlobal.prototype, 'namespace', {
-  get: function get () {
-    return this.options && this.options.namespace
+  if (this.contentWindow === this.daemonWindow) {
+    this.map = Object.create(null);
+  } else if (this.daemonWindow && this.daemonWindow[this.namespace]) {
+    this.map = this.daemonWindow[this.namespace].map || this.map;
+  }
+  if (!this.map) {
+    throw getError('Initialization failed, check if the \'options.namespace\' is consistent with the daemon window')
+  }
+  // this.$Vue.util.defineReactive(this.$Vue.prototype, 'ddvMultiWindowGlobalMap', this.map)
+}
+Object.assign(ps, {
+  $isServer: function $isServer () {
+    return this.$Vue ? this.$Vue.prototype.$isServer : null
   },
-  set: function set (value) {
+  $Vue: [function () {
+    return this._Vue ? this._Vue : null
+  }, function (value) {
+    return (this._Vue = value)
+  }],
+  namespace: [function () {
+    return this.options && this.options.namespace
+  }, function (value) {
     this.options = this.options || Object.create(null);
     return (this.options.namespace = value)
+  }]
+});
+
+function setDdvMultiWindow (input) {
+  DdvMultiWindow = input;
+}
+function DdvMultiWindowGlobal () {}
+
+Object.keys(ps).forEach(function (key) {
+  if (hp.call(DdvMultiWindowGlobal.prototype, key)) {
+    return
+  }
+  var item = ps[key];
+  if (isFunction(item)) {
+    Object.defineProperty(dp, key, { get: item });
+  } else if (Array.isArray(item)) {
+    var obj = {};
+    if (isDef(item[0]) && isFunction(item[0])) {
+      obj.get = item[0];
+    }
+    if (isDef(item[1]) && isFunction(item[1])) {
+      obj.set = item[1];
+    }
+    Object.defineProperty(dp, key, obj);
   }
 });
-var g = Object.assign((new DdvMultiWindowGlobal()), {
-  isDaemon: true,
-  Ready: Ready,
-  version: '0.1.6'
+
+var install = global.install;
+var DdvMultiWindow;
+
+var isProduction = process.env.NODE_ENV !== 'production'
+
+var dp$1 = DdvMultiWindow$1.prototype = Object.create(null);
+var hp$1 = Object.hasOwnProperty;
+var ps$1 = Object.create(null);
+var pd = 'proxyDaemonApp';
+
+setDdvMultiWindow(DdvMultiWindow$1);
+// 方法
+Object.assign(dp$1, {
+  constructor: constructor$1,
+  register: register,
+  unregister: unregister,
+  open: open,
+  remove: remove,
+  // 刷新窗口
+  refresh: refresh,
+  close: remove,
+  destroy: destroy,
+  back: back,
+  backRefresh: backRefresh,
+  removeBack: removeBack,
+  removeBackRefresh: removeBackRefresh,
+  closeBack: removeBack,
+  closeBackRefresh: removeBackRefresh
 });
-globalInit(g);
+// 属性
+Object.assign(ps$1, {
+  // 试图运行
+  tryRun: pd,
+  // 错误
+  onError: pd,
+  // 拖到数据
+  dragData: pd,
+  // 拖到数据
+  dragProcess: pd,
+
+  // 进程
+  // process: pd,
+  // 初始化
+  masterViewInit: pd,
+  // 切换窗口
+  tabToWindow: pd,
+  // 根据进程id获取窗口
+  getPidByWindow: pd,
+  // 根据窗口获取进程id
+  getWindowByPid: pd,
+  // 新窗口打开
+  openMasterWindow: pd,
+  // 移动到指定窗口
+  windowAppendChild: pd,
+  // 拖动到别的管理进程窗口
+  tabMoveMasterWindow: pd,
+  // 还原
+  closeMasterWindow: pd,
+  masterMoveParentByTaskId: pd,
+  // 所有系统进程
+  systemProcess: systemProcess,
+  // 进程
+  process: process$1,
+  // 进程id
+  id: id,
+  // 父层
+  parent: parent,
+  // 任务栏id
+  taskId: taskId,
+  // 守护进程id
+  daemonId: pd,
+  // 守护进程vue实例
+  daemonApp: daemonApp
+});
+
+function open (input) {
+  return this.daemonApp.open(input, this)
+}
+
+function remove (id) {
+  return this.daemonApp.remove(id || this.id)
+}
+
+function refresh (id) {
+  return this.daemonApp.refresh(id || this.id)
+}
+function id () {
+  return this.process ? this.process.id : null
+}
+function process$1 () {
+  return this._process ? this._process : null
+}
+function systemProcess () {
+  return this.daemonApp.process
+}
+function parent () {
+  return this.process && this.process.parentDdvMultiWindow ? this.process.parentDdvMultiWindow : null
+}
+function taskId () {
+  return this.process ? this.process.taskId : (this._initTaskId ? this._initTaskId : null)
+}
+function daemonApp () {
+  return this._daemonApp ? this._daemonApp : null
+}
+function back () {
+  return this.parent && this.tabToWindow(this.parent.id)
+}
+
+function backRefresh () {
+  var this$1 = this;
+
+  return this.back().then(function () { return this$1.refresh(this$1.parent.id); })
+}
+
+function removeBack () {
+  var this$1 = this;
+
+  return this.back().then(function () { return this$1.remove(); })
+}
+
+function removeBackRefresh () {
+  var this$1 = this;
+
+  return this.backRefresh().then(function () { return this$1.remove(); })
+}
+
+Object.keys(ps$1).forEach(function (method) {
+  if (hp$1.call(dp$1, method)) {
+    return
+  }
+  var item = ps$1[method];
+  if (item === pd) {
+    Object.defineProperty(dp$1, method, {
+      get: function get () {
+        if (!this.daemonApp) {
+          debugger
+        }
+        assert(this.daemonApp, '多窗口没有初始化');
+        return this.daemonApp[method]
+      },
+      set: function set (value) {
+        if (!this.daemonApp) {
+          debugger
+        }
+        assert(this.daemonApp, '多窗口没有初始化');
+        return (this.daemonApp[method] = value)
+      }
+    });
+  } else if (isFunction(item)) {
+    Object.defineProperty(dp$1, method, { get: item });
+  } else if (Array.isArray(item)) {
+    var obj = {};
+    if (isDef(item[0]) && isFunction(item[0])) {
+      obj.get = item[0];
+    }
+    if (isDef(item[1]) && isFunction(item[1])) {
+      obj.set = item[1];
+    }
+    Object.defineProperty(dp$1, method, obj);
+  }
+});
+
+function DdvMultiWindow$1 () {
+  if (this instanceof DdvMultiWindow$1) {
+    return this.constructor.apply(this, arguments)
+  } else {
+    throw Error('Must `new DdvMultiWindow()`')
+  }
+}
+
+function constructor$1 (daemonApp, taskId, process) {
+  // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
+  assert(
+    isProduction || global.installed,
+    "not installed. Make sure to call `Vue.use(DdvMultiWindow)` " +
+    "before creating root instance."
+  );
+  assert(
+    isProduction || inBrowser,
+    "必须有一个window"
+  );
+  this._vueModels = [];
+  this._daemonApp = daemonApp;
+  this._initTaskId = taskId;
+  this._process = process || null;
+}
+function register (vm) {
+  Array.isArray(this._vueModels) && this._vueModels.push(vm);
+  if (this.process && vm && vm.$options.beforeDdvMultiWindowRefresh && vm.$options.beforeDdvMultiWindowRefresh.length) {
+    this.process.hook.beforeRefresh.push.apply(this.process.hook.beforeRefresh, vm.$options.beforeDdvMultiWindowRefresh);
+  }
+}
+function unregister (vm) {
+  if (this.process && this.process.hook && vm && vm.$options && vm.$options.beforeDdvMultiWindowRefresh) {
+    this.process.hook.beforeRefresh = this.process.hook.beforeRefresh.filter(function (fn) {
+      return vm.$options.beforeDdvMultiWindowRefresh.indexOf(fn) < 0
+    });
+  }
+  if (Array.isArray(this._vueModels)) {
+    this._vueModels = this._vueModels.filter(function (v) { return (vm !== v); });
+    this._vueModels.length || this.destroy();
+  }
+}
+function destroy () {
+  delete this._vueModels;
+  delete this._daemonApp;
+  delete this._initTaskId;
+  delete this._process;
+}
+
+function argsToArray (args) {
+  return Array.prototype.slice.call(args)
+}
+
+// 获取一个错误对象的方法
+
+Object.assign(EventMessageWindow.prototype, {
+  // 事件头
+  eventName: 'ddvTabSysEventMessage',
+  // 可以接受的
+  targetOrigin: '*'
+}, {
+  on: on,
+  emit: emit,
+  remove: remove$1,
+  destroy: destroy$1,
+  onCatch: onCatch,
+  receive: receive,
+  postEmit: postEmit,
+  postEmitCall: postEmitCall,
+  decodeMessage: decodeMessage,
+  getMessageEvent: getMessageEvent,
+  setGetContentWindow: setGetContentWindow
+});
+// 窗口消息
+function EventMessageWindow (options) {
+  if (this instanceof EventMessageWindow) {
+    return constructor$2.call(this, options)
+  } else {
+    return new EventMessageWindow(options)
+  }
+}
+// 构造函数
+function constructor$2 (options) {
+  this.eventName = (options.eventName || 'ddvTabSysEventMessage');
+  //
+  this.postMessageType = options.postMessageType || (this.eventName + '#');
+  this.targetOrigin = options.targetOrigin || '*';
+  this.selfWindow = options.selfWindow || this.selfWindow;
+  // 回调进程池
+  this.postEmitCallCbs = {};
+  if (!this.selfWindow) {
+    if (typeof window === 'object' && window === window.window) {
+      this.selfWindow = window;
+    } else {
+      throw getError('options.selfWindow must input', 'OPTIONS_SELFWINDOW_MUST_INPUT')
+    }
+  }
+  this.selfWindow = options.selfWindow || ((typeof window === 'object' && window === window.window) ? window : this.selfWindow);
+  this.setGetContentWindow(options.getContentWindow);
+  if (isFunction(options.onCatch)) {
+    this.onCatch = options.onCatch;
+  }
+  this.onReceives = {};
+  windowEventListener.call(this, this.selfWindow);
+  postEmitCallCbListener.call(this);
+}
+function setGetContentWindow (fn) {
+  if (isFunction(fn)) {
+    this.getContentWindow = fn;
+  } else {
+    this.getContentWindow = function () {
+      return Promise.resolve({ contentWindow: window })
+    };
+  }
+}
+function postEmitCallCbListener () {
+  this.on('postEmitCallCb', function (event) {
+    var id = event.data.id;
+    var res = event.data.res;
+    var error = event.data.error;
+    var stack;
+    if (error && (error.message || error.stack)) {
+      if (error.stack) {
+        stack = '@postEmitCallCb ------postEmitCallCb------\n' + error.stack;
+      }
+      postEmitCallCb.call(this, id, void 0, getError(error.message, error.name, error.errorId, stack));
+    } else {
+      postEmitCallCb.call(this, id, res);
+    }
+  }.bind(this));
+}
+function postEmitCallCb (id, res, e) {
+  if (this.postEmitCallCbs[id]) {
+    if (e) {
+      this.postEmitCallCbs[id][1](e);
+    } else {
+      this.postEmitCallCbs[id][0](res);
+    }
+    delete this.postEmitCallCbs[id];
+  } else {
+    console.debug('不存在');
+  }
+}
+// 发送信息
+function postEmitCall (type, data, win, transfer) {
+  return new Promise(function (resolve, reject) {
+    var id = createNewPid();
+    this.postEmitCallCbs[id] = [resolve, reject];
+    this.postEmit(type, data, win, transfer, id, true)
+      .then(function () {
+        id = resolve = reject = void 0;
+      }, function (e) {
+        postEmitCallCb.call(this, id, void 0, e);
+        id = resolve = reject = e = void 0;
+      }.bind(this));
+  }.bind(this))
+}
+// 发送信息
+function postEmit (type, data, win, transfer, id, isCb) {
+  var res, args, isPM, postMessage, contentWindow, targetOrigin;
+  if (typeof win === 'object') {
+    res = win;
+  } else {
+    args = argsToArray(arguments);
+    type = data = res = transfer = id = isCb = void 0;
+    // 获取 window 对象
+    return this.getContentWindow(win)
+      .then(function (res) {
+        args[2] = res;
+        res = args;
+        args = void 0;
+        return postEmit.apply(this, res)
+      }.bind(this))
+  }
+  id = id || createNewPid();
+  // 序列化
+  var message = JSON.stringify({
+    id: id,
+    type: type,
+    data: data,
+    isCb: isCb || false
+  });
+  try {
+    // 试图获取 postMessage
+    postMessage = res.postMessage || void 0;
+    // 试图获取 targetOrigin
+    targetOrigin = res.targetOrigin || void 0;
+    // 试图获取 contentWindow
+    contentWindow = res.contentWindow || res;
+    // 如果获取 contentWindow 成功，
+    // 并且contentWindow中有postMessage
+    // 并且res要求使用isPostMessage时
+    if (contentWindow && typeof contentWindow.postMessage === 'function' && res.isPostMessage) {
+      // 强制使用 postMessage
+      postMessage = contentWindow.postMessage.bind(contentWindow);
+    }
+    // 是否试图获取成功 postMessage
+    isPM = typeof postMessage === 'function';
+  } catch (e) {
+    contentWindow = res;
+  }
+  if (!targetOrigin) {
+    targetOrigin = this.targetOrigin || '*';
+  }
+
+  if (isPM) {
+    try {
+      // isPostMessage为需要发送，如果存在postMessage方法，就使用postMessage发送事件
+      postMessage(this.postMessageType + message, targetOrigin, transfer);
+      return Promise.resolve(id)
+    } catch (e) {
+    }
+  }
+  // 试图使用调用模式传递
+  if (postMessageCall.call(this, contentWindow, message)) {
+    return Promise.resolve(id)
+  }
+  // 试图使用事件模式广播
+  if (postMessageEvent.call(this, contentWindow, message)) {
+    return Promise.resolve(id)
+  }
+
+  try {
+    // 如果contentWindow存在postMessage方法，并且不是postMessage发送事件
+    if (contentWindow && contentWindow.postMessage && contentWindow.postMessage !== postMessage) {
+      // 尝试使用contentWindow.postMessage发送
+      contentWindow.postMessage(this.postMessageType + message, targetOrigin, transfer);
+      return Promise.resolve(id)
+    }
+  } catch (e) {
+    return Promise.reject(e)
+  }
+  return Promise.reject(getError('postMessage fail', 'POST_MESSAGE_FAIL'))
+}
+// 试图使用调用模式传递
+function postMessageCall (contentWindow, message) {
+  var event;
+  try {
+    // 如果contentWindow.onDdvMultiWindowEMCall存在this.eventName方法
+    if (typeof contentWindow.onDdvMultiWindowEMCall === 'object' && typeof contentWindow.onDdvMultiWindowEMCall[this.eventName] === 'function') {
+      event = this.getMessageEvent(this.eventName, { data: message });
+      // 尝试使用contentWindow.onDdvMultiWindowEMCall的this.eventName发送
+      return contentWindow.onDdvMultiWindowEMCall[this.eventName](event) && true
+    }
+  } catch (e) {
+  }
+}
+// 试图使用事件模式广播
+function postMessageEvent (contentWindow, message) {
+  var event;
+  try {
+    event = this.getMessageEvent(this.eventName, { data: message });
+    try {
+      // isPostMessage为需要发送，如果存在dispatchEvent方法，就使用dispatchEvent发送事件
+      if (typeof contentWindow.dispatchEvent === 'function') {
+        contentWindow.dispatchEvent(event);
+        // 标记发送完毕，不需要再次发送
+        return true
+      }
+    } catch (e) {
+    }
+    try {
+      // isPostMessage为需要发送，如果存在fireEvent方法，就使用fireEvent发送事件
+      if (typeof contentWindow.fireEvent === 'function') {
+        contentWindow.fireEvent('on' + this.eventName, event);
+        // 标记发送完毕，不需要再次发送
+        return true
+      }
+    } catch (e) {
+    }
+  } catch (e) {
+  }
+  return false
+}
+// 移除监听
+function remove$1 (type, fn) {
+  var this$1 = this;
+
+  if (typeof type === 'function') {
+    fn = type;
+    for (var key in this$1.onReceives) {
+      if (this$1.onReceives.hasOwnProperty(key)) {
+        this$1.remove(key, fn);
+      }
+    }
+  } else if (typeof type === 'string') {
+    if (typeof fn === 'function') {
+      for (var i = 0; i < this.onReceives[type].length; i++) {
+        // 如果是数组，并且是这个方法
+        if (Array.isArray(this$1.onReceives[type]) && this$1.onReceives[type][i] === fn) {
+          // 切除
+          this$1.onReceives[type].splice(i, 1);
+          // i 往后退1
+          i--;
+        }
+      }
+    } else {
+      delete this.onReceives[type];
+    }
+  }
+}
+// 触发
+function emit (event) {
+  var this$1 = this;
+
+  var e;
+  if (!event.type) {
+    e = getError('Message type error', 'MESSAGE_TYPE_ERROR');
+    e.isDecodeError = true;
+    return Promise.reject(e)
+  }
+  var events = this.onReceives[event.type] || [];
+  for (var i = 0; i < events.length; i++) {
+    emitFn.call({
+      isCb: false,
+      event: event,
+      postEmit: postEmit.bind(this$1)
+    }, events[i]);
+  }
+  event = void 0;
+}
+// 触发
+function emitFn (fn) {
+  return (new Promise(function (resolve, reject) {
+    var res = fn(this.event);
+    if (isFunction(res.then)) {
+      this.isCb = true;
+      res.then(resolve, reject);
+    } else if (res) {
+      this.isCb = true;
+      resolve(res);
+    } else {
+      resolve();
+    }
+    resolve = reject = void 0;
+  }.bind(this)))
+    .then(function (res) {
+      return this.isCb && this.event && this.event.id && this.postEmit('postEmitCallCb', {
+        id: this.event.id,
+        res: res
+      }, {
+        contentWindow: this.event.source
+      })
+    }.bind(this), function (e) {
+      return this.isCb && this.event && this.event.id && this.postEmit('postEmitCallCb', {
+        id: this.event.id,
+        error: {
+          name: e.name || void 0,
+          stack: e.stack || void 0,
+          message: e.message || void 0,
+          errorId: e.errorId || void 0
+        }
+      }, {
+        contentWindow: this.event.source
+      })
+    }.bind(this))
+}
+// 监听
+function on (type, fn) {
+  if (!Array.isArray(this.onReceives[type])) {
+    this.onReceives[type] = [];
+  }
+  this.onReceives[type].push(fn);
+}
+// 解密数据
+function decodeMessage (input) {
+  var data;
+  if (typeof input !== 'string') {
+    // 必须是字符串
+    return Promise.reject(getError('Input must be a string', 'INPUT_MUST_STRING'))
+  }
+  try {
+    data = JSON.parse(input);
+  } catch (e) {
+    return Promise.reject(getError('window not found', 'WINDOW_NOT_FINT'))
+  }
+  // 直接返回承诺
+  return Promise.resolve(data)
+}
+// 获取一个标准的消息事件
+function getMessageEvent (type, eventInit) {
+  var event;
+  eventInit = typeof eventInit === 'object' ? eventInit : Object.create(null);
+  eventInit.source = eventInit.source || this.selfWindow;
+  eventInit.origin = eventInit.origin || this.selfWindow.origin || (this.selfWindow.location && this.selfWindow.location.origin);
+
+  try {
+    if (typeof MessageEvent === 'function') {
+      event = new MessageEvent(type, eventInit);
+    } else {
+      event = new Event(type, eventInit);
+    }
+  } catch (e) {
+    event = eventInit;
+  }
+  'source origin ports data id isCb'.split(' ').forEach(function (key) {
+    try {
+      if (eventInit[key] && event[key] !== eventInit[key]) {
+        event[key] = eventInit[key];
+      }
+    } catch (e) {
+
+    }
+  });
+  return event
+}
+
+function receiveMessage (event) {
+  var input = event.data || void 0;
+  if (typeof input !== 'string' || input.substr(0, this.postMessageType.length) !== this.postMessageType) {
+    // 必须是字符串，并且满足基本需求
+    return void 0
+  }
+  // 解析数据
+  return this.receive(event, input.substr(this.postMessageType.length))
+}
+function receiveCall (event) {
+  try {
+    this.receive(event);
+  } catch (e) {
+    return false
+  }
+  return true
+}
+function receiveEvent (event) {
+  return this.receive(event)
+}
+function receive (event, data) {
+  // 解析数据
+  return this.decodeMessage(data || event.data || void 0)
+    .then(function (data) {
+      var e = this.getMessageEvent(data.type, Object.assign(Object.create(null), {
+        source: event.source,
+        origin: event.origin
+      }, data));
+      return this.emit(e)
+    }.bind(this), function (e) {
+      e.isDecodeError = true;
+      return this.onCatch(e)
+    }.bind(this))
+}
+// 监听绑定
+function windowEventListener (contentWindow) {
+  if (contentWindow.addEventListener) { // all browsers except IE before version 9
+    contentWindow.addEventListener('message', receiveMessage.bind(this), false);
+    contentWindow.addEventListener(this.eventName, receiveEvent.bind(this), false);
+  } else if (contentWindow.attachEvent) { // IE before version 9
+    contentWindow.attachEvent('onmessage', receiveMessage.bind(this));
+    contentWindow.attachEvent('on' + this.eventName, receiveEvent.bind(this));
+  }
+  try {
+    if (typeof contentWindow.onDdvMultiWindowEMCall !== 'object') {
+      contentWindow.onDdvMultiWindowEMCall = Object.create(null);
+    }
+    contentWindow.onDdvMultiWindowEMCall[this.eventName] = receiveCall.bind(this);
+  } catch (e) {
+  }
+  return Promise.resolve()
+}
+// 默认异常处理
+function onCatch (e) {
+  return Promise.reject(e)
+}
+function destroy$1 () {
+
+}
 
 if (inBrowser && window.Vue) {
-  window.Vue.use(DdvMultiWindow);
-}
-function registerInstance (vm, callVal) {
-  var i = vm.$options._parentVnode;
-  if (isDef(i) && isDef(i = i.data) && isDef(i = i.registerDdvMultiWindowInstance)) {
-    i(vm, callVal);
-  }
+  window.Vue.use(DdvMultiWindow$1);
 }
 
-exports._Vue = _Vue;
-exports.DdvMultiWindowGlobal = DdvMultiWindowGlobal;
-exports.default = g;
 exports.Ready = Ready;
+exports.install = install;
+exports.default = global;
 exports.EventMessageWindow = EventMessageWindow;
