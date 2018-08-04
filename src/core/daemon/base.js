@@ -10,9 +10,6 @@ export default {
     }
   },
   computed: {
-    id () {
-      return this.daemonId
-    },
     // 初始化完毕
     ready () {
       return this.process.daemon.init
