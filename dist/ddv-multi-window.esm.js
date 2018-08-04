@@ -2542,9 +2542,9 @@ var apiAction = {
           }
           options.options = input;
         });
-        // 还是没有src，当是在进程中找到
-        if (!options.src && parentDdvMultiWindow.$id && this.process[parentDdvMultiWindow.$id]) {
-          var task = this.process[parentDdvMultiWindow.$id];
+        // 还是没有src
+        if (!options.src && parentDdvMultiWindow.$process) {
+          var task = parentDdvMultiWindow.$process;
           var route = task.route;
           var src$1 = route.path;
 

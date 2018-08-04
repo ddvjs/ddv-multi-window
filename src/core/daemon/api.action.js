@@ -49,9 +49,9 @@ export default {
           }
           options.options = input
         })
-        // 还是没有src，当是在进程中找到
-        if (!options.src && parentDdvMultiWindow.$id && this.process[parentDdvMultiWindow.$id]) {
-          const task = this.process[parentDdvMultiWindow.$id]
+        // 还是没有src
+        if (!options.src && parentDdvMultiWindow.$process) {
+          const task = parentDdvMultiWindow.$process
           const route = task.route
           let src = route.path
 

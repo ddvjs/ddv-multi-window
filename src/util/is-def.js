@@ -1,7 +1,8 @@
-export default function isDef (v) {
+export { isDef as default, isDef, unDefDefault, unDefDefaultByObj }
+
+function isDef (v) {
   return typeof v !== 'undefined'
 }
-export { isDef, unDefDefault, unDefDefaultByObj }
 
 function unDefDefault (v, d) {
   return isDef(v) ? v : d

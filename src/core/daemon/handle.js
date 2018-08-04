@@ -1,6 +1,6 @@
 import sleep from '../../util/sleep'
 import findRefOrSleepCall from '../../util/find-or-sleep-call'
-import DdvMultiWindow from '../../api'
+import DdvMultiWindow from '../api'
 const $ = require('jquery')
 
 export default {
