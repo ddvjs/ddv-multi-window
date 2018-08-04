@@ -1,6 +1,9 @@
-import { assert } from './util/warn'
-import { inBrowser } from './util/dom'
-import { isDef } from './util/is-def'
+import { assert } from '../util/warn'
+import { inBrowser } from '../util/dom'
+import { isDef } from '../util/is-def'
+import global, { setDdvMultiWindow } from './global'
+
+setDdvMultiWindow(DdvMultiWindow)
 
 const vueAppMethods = [
   // 守护进程id
@@ -33,10 +36,6 @@ const vueAppMethods = [
   'closeMasterWindow',
   'masterMoveParentByTaskId'
 ]
-export let global
-export function globalInit (g) {
-  global = g
-}
 export { DdvMultiWindow, DdvMultiWindow as default }
 function DdvMultiWindow (app, taskId) {
   this.constructor.apply(this, arguments)
@@ -58,7 +57,7 @@ DdvMultiWindow.prototype = {
   closeBackRefresh: removeBackRefresh
 }
 const prototypes = {
-  
+
 }
 
 vueAppMethods.forEach(method => {
@@ -75,7 +74,6 @@ vueAppMethods.forEach(method => {
     })
   }
 })
-
 
 defineProperty('$process', function () {
   return this._selfApp ? this._selfApp._ddvProcess : null
