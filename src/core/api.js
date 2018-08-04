@@ -7,6 +7,8 @@ import global, { setDdvMultiWindow } from './global'
 const dp = DdvMultiWindow.prototype = Object.create(null)
 const hp = Object.hasOwnProperty
 const ps = Object.create(null)
+const pd = 'proxyDaemonApp'
+const isp = process.env.NODE_ENV !== 'production'
 
 setDdvMultiWindow(DdvMultiWindow)
 
@@ -49,7 +51,7 @@ Object.assign(dp, {
   refresh,
   close: remove,
   $getBySelfApp,
-  $destroy,
+  destroy,
   back,
   backRefresh,
   removeBack,
@@ -69,6 +71,12 @@ Object.assign(ps, {
   },
   $parent () {
     return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
+  },
+  daemonApp () {
+    return this._daemonApp ? this._daemonApp : null
+  },
+  selfApp () {
+    return this._selfApp ? this._selfApp : null
   }
 })
 
@@ -76,39 +84,33 @@ vueAppMethods.forEach(method => {
   if (!hp.call(dp, method)) {
     Object.defineProperty(dp, method, {
       get () {
-        assert(this._daemonApp, '多窗口没有初始化')
-        return this._daemonApp[method]
+        assert(this.daemonApp, '多窗口没有初始化')
+        return this.daemonApp[method]
       },
       set (value) {
-        assert(this._daemonApp, '多窗口没有初始化')
-        return (this._daemonApp[method] = value)
+        assert(this.daemonApp, '多窗口没有初始化')
+        return (this.daemonApp[method] = value)
       }
     })
   }
 })
-
-function $destroy () {
-  delete this._daemonApp
-  delete this._selfApp
-  delete this._taskId
-}
 
 function $getBySelfApp (app) {
   return new DdvMultiWindow(this._daemonApp, this._taskId, app)
 }
 
 function open (input) {
-  return this._daemonApp.open(input, this)
+  return this.daemonApp.open(input, this)
 }
 
 function remove (id) {
   const $id = id || this.$id
-  return this._daemonApp.remove($id)
+  return this.daemonApp.remove($id)
 }
 
 function refresh (id) {
   const $id = id || this.$id
-  return this._daemonApp.refresh($id)
+  return this.daemonApp.refresh($id)
 }
 
 function back () {
@@ -127,13 +129,24 @@ function removeBackRefresh () {
   return this.backRefresh().then(() => this.remove())
 }
 
-Object.keys(ps).forEach(key => {
-  if (hp.call(dp, key)) {
+Object.keys(ps).forEach(method => {
+  if (hp.call(dp, method)) {
     return
   }
-  const item = ps[key]
-  if (isFunction(item)) {
-    Object.defineProperty(dp, key, { get: item })
+  const item = ps[method]
+  if (item === pd) {
+    Object.defineProperty(dp, method, {
+      get () {
+        assert(this.daemonApp, '多窗口没有初始化')
+        return this.daemonApp[method]
+      },
+      set (value) {
+        assert(this.daemonApp, '多窗口没有初始化')
+        return (this.daemonApp[method] = value)
+      }
+    })
+  } else if (isFunction(item)) {
+    Object.defineProperty(dp, method, { get: item })
   } else if (Array.isArray(item)) {
     const obj = {}
     if (isDef(item[0]) && isFunction(item[0])) {
@@ -142,7 +155,7 @@ Object.keys(ps).forEach(key => {
     if (isDef(item[1]) && isFunction(item[1])) {
       obj.set = item[1]
     }
-    Object.defineProperty(dp, key, obj)
+    Object.defineProperty(dp, method, obj)
   }
 })
 
@@ -156,18 +169,23 @@ function DdvMultiWindow () {
 
 function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
-  process.env.NODE_ENV !== 'production' && assert(
-    global.installed,
+  assert(
+    isp || global.installed,
     `not installed. Make sure to call \`Vue.use(DdvMultiWindow)\` ` +
     `before creating root instance.`
   )
-  process.env.NODE_ENV !== 'production' && assert(
-    inBrowser,
+  assert(
+    isp || inBrowser,
     `必须有一个window`
   )
   this._daemonApp = daemonApp
-  this._selfApp = selfApp || this._daemonApp
+  this._selfApp = selfApp || daemonApp
   this._taskId = taskId
+}
+function destroy () {
+  delete this._daemonApp
+  delete this._selfApp
+  delete this._taskId
 }
 
 export { DdvMultiWindow, DdvMultiWindow as default }

@@ -189,8 +189,8 @@ function RegisterInstanceInstall (Vue) {
     created () {
     },
     destroyed () {
-      if (this._ddvMultiWindow && this._ddvMultiWindow.$destroy) {
-        this._ddvMultiWindow.$destroy()
+      if (this._ddvMultiWindow && this._ddvMultiWindow.destroy) {
+        this._ddvMultiWindow.destroy()
       }
       if (this._ddvProcess && this._ddvProcess.hook) {
         this._ddvProcess.hook.beforeRefresh = this._ddvProcess.hook.beforeRefresh.filter(fn => {
