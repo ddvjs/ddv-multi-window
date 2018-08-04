@@ -1,7 +1,12 @@
 import { assert } from '../util/warn'
 import { inBrowser } from '../util/dom'
 import { isDef } from '../util/is-def'
+import isFunction from '../util/is-function'
 import global, { setDdvMultiWindow } from './global'
+
+const dp = DdvMultiWindow.prototype = Object.create(null)
+const hp = Object.hasOwnProperty
+const ps = Object.create(null)
 
 setDdvMultiWindow(DdvMultiWindow)
 
@@ -36,11 +41,7 @@ const vueAppMethods = [
   'closeMasterWindow',
   'masterMoveParentByTaskId'
 ]
-export { DdvMultiWindow, DdvMultiWindow as default }
-function DdvMultiWindow (app, taskId) {
-  this.constructor.apply(this, arguments)
-}
-DdvMultiWindow.prototype = {
+Object.assign(dp, {
   constructor,
   open,
   remove,
@@ -55,14 +56,25 @@ DdvMultiWindow.prototype = {
   removeBackRefresh,
   closeBack: removeBack,
   closeBackRefresh: removeBackRefresh
-}
-const prototypes = {
-
-}
+})
+Object.assign(ps, {
+  $process () {
+    return this._selfApp ? this._selfApp._ddvProcess : null
+  },
+  $id () {
+    return this.$process ? this.$process.id : null
+  },
+  taskId () {
+    return this._taskId ? this._taskId : null
+  },
+  $parent () {
+    return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
+  }
+})
 
 vueAppMethods.forEach(method => {
-  if (!DdvMultiWindow.prototype.hasOwnProperty(method)) {
-    Object.defineProperty(DdvMultiWindow.prototype, method, {
+  if (!hp.call(dp, method)) {
+    Object.defineProperty(dp, method, {
       get () {
         assert(this._daemonApp, '多窗口没有初始化')
         return this._daemonApp[method]
@@ -75,18 +87,6 @@ vueAppMethods.forEach(method => {
   }
 })
 
-defineProperty('$process', function () {
-  return this._selfApp ? this._selfApp._ddvProcess : null
-})
-defineProperty('$id', function () {
-  return this.$process ? this.$process.id : null
-})
-defineProperty('taskId', function () {
-  return this._taskId ? this._taskId : null
-})
-defineProperty('$parent', function () {
-  return this.$process && this.$process.parentDdvMultiWindow ? this.$process.parentDdvMultiWindow : null
-})
 function $destroy () {
   delete this._daemonApp
   delete this._selfApp
@@ -127,6 +127,30 @@ function removeBackRefresh () {
   return this.backRefresh().then(() => this.remove())
 }
 
+Object.keys(ps).forEach(key => {
+  if (hp.call(dp, key)) {
+    return
+  }
+  const item = ps[key]
+  if (isFunction(item)) {
+    Object.defineProperty(dp, key, { get: item })
+  } else if (Array.isArray(item)) {
+    const obj = {}
+    if (isDef(item[0]) && isFunction(item[0])) {
+      obj.get = item[0]
+    }
+    if (isDef(item[1]) && isFunction(item[1])) {
+      obj.set = item[1]
+    }
+    Object.defineProperty(dp, key, obj)
+  }
+})
+
+export { DdvMultiWindow, DdvMultiWindow as default }
+function DdvMultiWindow (app, taskId) {
+  this.constructor.apply(this, arguments)
+}
+
 function constructor (daemonApp, taskId, selfApp) {
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   process.env.NODE_ENV !== 'production' && assert(
@@ -141,15 +165,4 @@ function constructor (daemonApp, taskId, selfApp) {
   this._daemonApp = daemonApp
   this._selfApp = selfApp || this._daemonApp
   this._taskId = taskId
-}
-function defineProperty (key, get, set) {
-  let obj = {}
-  if (isDef(get)) {
-    obj.get = get
-  }
-  if (isDef(set)) {
-    obj.set = set
-  }
-  DdvMultiWindow.prototype.hasOwnProperty(key) || Object.defineProperty(DdvMultiWindow.prototype, key, obj)
-  obj = void 0
 }

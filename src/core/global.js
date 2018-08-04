@@ -7,6 +7,7 @@ import DmwButton from '../components/dmw-button'
 import MasterTask from '../components/master-task'
 import MasterView from '../components/master-view'
 import getByParent from '../util/get-by-parent'
+import isFunction from '../util/is-function'
 import getError, { throwError } from '../util/get-error'
 import { isDef, unDefDefaultByObj } from '../util/is-def'
 import { warn } from '../util/warn'
@@ -14,7 +15,7 @@ import { getWindow, getDaemonWindow } from '../util/window'
 
 const dp = DdvMultiWindowGlobal.prototype = Object.create(null)
 const hp = Object.hasOwnProperty
-const prototypes = Object.create(null)
+const ps = Object.create(null)
 const global = new DdvMultiWindowGlobal()
 
 Object.assign(global, {
@@ -265,7 +266,7 @@ function mapInstall () {
   }
   // this.$Vue.util.defineReactive(this.$Vue.prototype, 'ddvMultiWindowGlobalMap', this.map)
 }
-Object.assign(prototypes, {
+Object.assign(ps, {
   $isServer () {
     return this.$Vue ? this.$Vue.prototype.$isServer : null
   },
@@ -282,10 +283,6 @@ Object.assign(prototypes, {
   }]
 })
 
-function isFunction (fn) {
-  return typeof fn === 'function'
-}
-
 function registerInstance (vm, callVal) {
   let i = vm.$options._parentVnode
   if (isDef(i) && isDef(i = i.data) && isDef(i = i.registerDdvMultiWindowInstance)) {
@@ -298,11 +295,11 @@ function setDdvMultiWindow (input) {
 }
 function DdvMultiWindowGlobal () {}
 
-Object.keys(prototypes).forEach(key => {
+Object.keys(ps).forEach(key => {
   if (hp.call(DdvMultiWindowGlobal.prototype, key)) {
     return
   }
-  const item = prototypes[key]
+  const item = ps[key]
   if (isFunction(item)) {
     Object.defineProperty(dp, key, { get: item })
   } else if (Array.isArray(item)) {
