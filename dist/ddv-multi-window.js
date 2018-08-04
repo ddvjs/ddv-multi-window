@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.8
+  * ddv-multi-window v0.1.9
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -163,7 +163,7 @@ function removeArray (array, fn) {
 //
 
 var script = {
-  name: 'ddv-multi-window-task-template',
+  name: 'horizontal-task',
   props: {
     task: {
       type: Object
@@ -174,6 +174,9 @@ var script = {
     },
     handleTask: {
       type: Function
+    },
+    taskOptions: {
+      type: Object
     }
   },
   computed: {
@@ -188,6 +191,21 @@ var script = {
     },
     dragData: function dragData () {
       return this.$ddvMultiWindow.dragData || {}
+    },
+    taskMenuStyle: function taskMenuStyle () {
+      var this$1 = this;
+
+      var style = {};
+
+      if (this.taskOptions.menuStyle && typeof this.taskOptions.menuStyle === 'object') {
+        var keys = Object.keys(this.taskOptions.menuStyle);
+        keys.forEach(function (key) {
+          if (this$1.taskOptions.menuStyle[keys] || this$1.taskOptions.menuStyle[keys] === 0) {
+            style[key] = this$1.taskOptions.menuStyle[keys];
+          }
+        });
+      }
+      return style
     }
   },
   data: function data () {
@@ -227,8 +245,6 @@ var script = {
         // 实际显示位置
         if (isHide) {
           placeholder = $li.innerWidth() + marginLeft - marginRight;
-          // obj.startX = 0
-          // obj.endX = 0
         } else {
           obj.startX = position.left + marginLeft - placeholder;
           obj.endX = position.left + $li.innerWidth() + marginLeft - marginRight - placeholder;
@@ -252,12 +268,14 @@ var script = {
     },
     // tab标签 - 开始拖动源对象
     handleTabDragStart: function handleTabDragStart (event, pid) {
+      var process = this.process[pid];
       var $tabTask = refToJquery(this.$refs.tabTask);
       this.dragData.$dom = $tabTask.closest(event.target);
       refToJquery(this.$refs.tabTask)
         .addClass('transition');
       this.setInfo(event);
       this.dragData.id = pid;
+      this.dragData.ing = true;
       this.dragData.taskId = this.taskId;
       // 原始taskId
       this.dragData.rootTaskId = this.taskId;
@@ -274,12 +292,16 @@ var script = {
           windowId: pid
         }
       }));
-      event.dataTransfer.setData('text/plain', 'http://www.baidu.com/sfa/ss');
+      event.dataTransfer.setData('text/plain', process.href || process.src);
     },
     // tab标签 - 拖动结束
     handleTabDragEnd: function handleTabDragEnd (event, pid) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
+      this.dragData.ing = false;
       refToJquery(this.$refs.tabTask)
         .removeClass('transition');
       this.activeEvent = null;
@@ -308,6 +330,9 @@ var script = {
     handleTabWrapDragOver: function handleTabWrapDragOver (event, dropId) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 注意禁止浏览器默认事件
       event.preventDefault();
       var $tabTask = refToJquery(this.$refs.tabTask);
@@ -365,6 +390,9 @@ var script = {
     },
     // tab盒子 - 离开目标区域
     handleTabWrapDragLeave: function handleTabWrapDragLeave (event) {
+      if (this.dragData.ing !== true) {
+        return
+      }
       // 超出盒子范围内
       if (!(event.pageY >= this.dragData.barStartY && event.pageY <= this.dragData.barEndY - 2)) {
         this.reduction();
@@ -374,6 +402,9 @@ var script = {
     handleTabWrapDrop: function handleTabWrapDrop (event, dropId) {
       var this$1 = this;
 
+      if (this.dragData.ing !== true) {
+        return
+      }
       refToJquery(this.$refs.tabTask)
         .removeClass('transition');
       event.preventDefault();
@@ -450,10 +481,7 @@ var script = {
       handler: 'pidsChange'
     }
   },
-  destroyed: function destroyed () {},
-  mounted: function mounted () {
-    // 必须 是 mounted 后执行，非 ddvReadyd 事件
-  }
+  destroyed: function destroyed () {}
 }
 
 /* script */
@@ -464,270 +492,253 @@ var __vue_render__ = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("section", { staticClass: "tabTask" }, [
-    _c("div", { staticClass: "tabTask-menu" }, [
-      _c(
-        "ul",
-        {
-          ref: "tabTaskWrap",
-          staticClass: "tabTask-menu__ul clearfix",
-          on: {
-            dragover: function($event) {
-              $event.stopPropagation();
-              return (function($event) {
-                return _vm.handleTabWrapDragOver($event, null)
-              })($event)
-            },
-            dragleave: function($event) {
-              $event.stopPropagation();
-              return (function($event) {
-                return _vm.handleTabWrapDragLeave($event)
-              })($event)
-            },
-            drop: function($event) {
-              $event.stopPropagation();
-              return (function($event) {
-                return _vm.handleTabWrapDrop($event, null)
-              })($event)
-            }
+  return _c("div", { staticClass: "tabTask-menu tabTask" }, [
+    _c(
+      "ul",
+      {
+        ref: "tabTaskWrap",
+        staticClass: "tabTask-menu__ul clearfix",
+        style: _vm.taskMenuStyle,
+        on: {
+          dragover: function($event) {
+            $event.stopPropagation();
+            _vm.handleTabWrapDragOver($event, null);
+          },
+          dragleave: function($event) {
+            $event.stopPropagation();
+            _vm.handleTabWrapDragLeave($event);
+          },
+          drop: function($event) {
+            $event.stopPropagation();
+            _vm.handleTabWrapDrop($event, null);
           }
-        },
-        [
-          _vm._l(this.pids, function(id) {
-            return id && _vm.process[id]
-              ? _c(
-                  "li",
-                  {
-                    key: id,
-                    ref: "tabTask",
-                    refInFor: true,
-                    staticClass: "tabTask-menu__li",
-                    class: {
-                      "tabTask-menu__linow": id === _vm.activeId
+        }
+      },
+      [
+        _vm._l(this.pids, function(id) {
+          return id && _vm.process[id]
+            ? _c(
+                "li",
+                {
+                  key: id,
+                  ref: "tabTask",
+                  refInFor: true,
+                  staticClass: "tabTask-menu__li",
+                  class: {
+                    "tabTask-menu__linow": id === _vm.activeId
+                  },
+                  attrs: { processid: id, draggable: "true" },
+                  on: {
+                    click: function($event) {
+                      _vm.handleTask($event, "click", id);
                     },
-                    attrs: { processid: id, draggable: "true" },
-                    on: {
-                      click: function($event) {
-                        _vm.handleTask($event, "click", id);
-                      },
-                      contextmenu: function($event) {
-                        _vm.handleTask($event, "contextMenu", id);
-                      },
-                      drop: function($event) {
-                        $event.stopPropagation();
-                        _vm.handleTabWrapDrop($event, id);
-                      },
-                      dragstart: function($event) {
-                        $event.stopPropagation();
-                        _vm.handleTabDragStart($event, id);
-                      },
-                      dragover: function($event) {
-                        $event.stopPropagation();
-                        _vm.handleTabWrapDragOver($event, id);
-                      },
-                      dragend: function($event) {
-                        $event.stopPropagation();
-                        _vm.handleTabDragEnd($event, id);
-                      }
+                    contextmenu: function($event) {
+                      _vm.handleTask($event, "contextMenu", id);
+                    },
+                    drop: function($event) {
+                      $event.stopPropagation();
+                      _vm.handleTabWrapDrop($event, id);
+                    },
+                    dragstart: function($event) {
+                      $event.stopPropagation();
+                      _vm.handleTabDragStart($event, id);
+                    },
+                    dragover: function($event) {
+                      $event.stopPropagation();
+                      _vm.handleTabWrapDragOver($event, id);
+                    },
+                    dragend: function($event) {
+                      $event.stopPropagation();
+                      _vm.handleTabDragEnd($event, id);
                     }
-                  },
-                  [
-                    _c("div", { staticClass: "tabTask-menu__item" }, [
-                      _vm._v(_vm._s(_vm.process[id].title))
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "tabTask-menu__handle" }, [
-                      _c(
-                        "div",
-                        {
-                          staticClass: "inline-block",
-                          on: {
-                            click: function($event) {
-                              $event.stopPropagation();
-                              _vm.handleTask($event, "openMasterWindow", id);
-                            }
-                          }
-                        },
-                        [
-                          _c("i", {
-                            staticClass: "dmw-icon icon-new-window f14"
-                          })
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _vm.process[id].refreshable !== false
-                        ? _c(
-                            "div",
-                            {
-                              staticClass: "inline-block",
-                              on: {
-                                click: function($event) {
-                                  _vm.handleTask($event, "refresh", id);
-                                }
-                              }
-                            },
-                            [
-                              _c("i", {
-                                staticClass: "dmw-icon icon-refresh f14"
-                              })
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.process[id].closable !== false
-                        ? _c(
-                            "div",
-                            {
-                              staticClass: "inline-block",
-                              on: {
-                                click: function($event) {
-                                  _vm.handleTask($event, "remove", id);
-                                }
-                              }
-                            },
-                            [
-                              _c("i", {
-                                staticClass: "dmw-icon icon-close f14"
-                              })
-                            ]
-                          )
-                        : _vm._e()
-                    ])
-                  ]
-                )
-              : _vm._e()
-          }),
-          _vm._v(" "),
-          _c(
-            "li",
-            {
-              ref: "menuArrow",
-              staticClass: "tabTask-menu__arrow",
-              on: {
-                mouseenter: function($event) {
-                  _vm.isShowDropdown = true;
+                  }
                 },
-                mouseleave: function($event) {
-                  _vm.isShowDropdown = false;
-                }
-              }
-            },
-            [
-              _c("i", {
-                staticClass: "dmw-icon icon-down-arrow tabTask-menu__pull f14"
-              }),
-              _vm._v(" "),
-              _c("transition", { attrs: { name: "fade" } }, [
-                _c(
-                  "ul",
-                  {
-                    directives: [
+                [
+                  _c("div", { staticClass: "tabTask-menu__item" }, [
+                    _vm._v(_vm._s(_vm.process[id].title))
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "tabTask-menu__handle" }, [
+                    _c(
+                      "div",
                       {
-                        name: "show",
-                        rawName: "v-show",
-                        value: _vm.isShowDropdown,
-                        expression: "isShowDropdown"
-                      }
-                    ],
-                    staticClass: "menu-dropdown"
-                  },
-                  [
-                    _c("div", { staticClass: "menu-dropdown__arrow" }),
-                    _vm._v(" "),
-                    _c("li", { staticClass: "menu-dropdown__item" }, [
-                      _c(
-                        "div",
-                        {
-                          staticClass: "tabTask-menu__dropItem",
-                          on: {
-                            click: function($event) {
-                              _vm.handleTask($event, "removeAll", _vm.task.id);
-                            }
+                        staticClass: "inline-block",
+                        on: {
+                          click: function($event) {
+                            $event.stopPropagation();
+                            _vm.handleTask($event, "openMasterWindow", id);
                           }
-                        },
-                        [
-                          _c("div", { staticClass: "text-center" }, [
-                            _vm._v("关闭全部")
-                          ])
-                        ]
-                      )
-                    ]),
+                        }
+                      },
+                      [_c("i", { staticClass: "dmw-icon icon-new-window f14" })]
+                    ),
                     _vm._v(" "),
-                    _c("li", { staticClass: "menu-dropdown__item" }, [
-                      _c("div", { staticClass: "tabTask-menu__dropItem" }, [
-                        _c(
+                    _vm.process[id].refreshable !== false
+                      ? _c(
                           "div",
-                          { staticClass: "text-center tabTask-menu__manage" },
-                          [_vm._v("管理默认标签")]
+                          {
+                            staticClass: "inline-block",
+                            on: {
+                              click: function($event) {
+                                _vm.handleTask($event, "refresh", id);
+                              }
+                            }
+                          },
+                          [
+                            _c("i", {
+                              staticClass: "dmw-icon icon-refresh f14"
+                            })
+                          ]
                         )
-                      ])
-                    ]),
-                    _vm._v(" "),
-                    _vm.pids && _vm.pids.length > 0
-                      ? _c("li", { staticClass: "menu-dropdown__item-line" })
                       : _vm._e(),
                     _vm._v(" "),
-                    _vm._l(_vm.pids, function(id) {
-                      return _c(
-                        "li",
-                        { key: id, staticClass: "menu-dropdown__item" },
-                        [
-                          _c(
-                            "div",
-                            {
-                              staticClass: "tabTask-menu__dropItem clearfix",
-                              on: {
-                                click: function($event) {
-                                  _vm.handleTask($event, "click", id);
-                                }
+                    _vm.process[id].closable !== false
+                      ? _c(
+                          "div",
+                          {
+                            staticClass: "inline-block",
+                            on: {
+                              click: function($event) {
+                                _vm.handleTask($event, "remove", id);
                               }
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "tabTask-menu__title" },
-                                [_vm._v(_vm._s(_vm.process[id].title))]
-                              ),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "tabTask-menu__util" }, [
-                                _vm.process[id].closable !== false
-                                  ? _c("i", {
-                                      staticClass: "dmw-icon icon-close f12",
-                                      on: {
-                                        click: function($event) {
-                                          _vm.handleTask($event, "remove", id);
-                                        }
-                                      }
-                                    })
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                _vm.process[id].refreshable !== false
-                                  ? _c("i", {
-                                      staticClass: "dmw-icon icon-refresh f12",
-                                      on: {
-                                        click: function($event) {
-                                          _vm.handleTask($event, "refresh", id);
-                                        }
-                                      }
-                                    })
-                                  : _vm._e()
-                              ])
-                            ]
-                          )
-                        ]
-                      )
-                    })
+                            }
+                          },
+                          [_c("i", { staticClass: "dmw-icon icon-close f14" })]
+                        )
+                      : _vm._e()
+                  ])
+                ]
+              )
+            : _vm._e()
+        }),
+        _vm._v(" "),
+        _c(
+          "li",
+          {
+            ref: "menuArrow",
+            staticClass: "tabTask-menu__arrow",
+            on: {
+              mouseenter: function($event) {
+                _vm.isShowDropdown = true;
+              },
+              mouseleave: function($event) {
+                _vm.isShowDropdown = false;
+              }
+            }
+          },
+          [
+            _c("i", {
+              staticClass: "dmw-icon icon-down-arrow tabTask-menu__pull f14"
+            }),
+            _vm._v(" "),
+            _c("transition", { attrs: { name: "fade" } }, [
+              _c(
+                "ul",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: _vm.isShowDropdown,
+                      expression: "isShowDropdown"
+                    }
                   ],
-                  2
-                )
-              ])
-            ],
-            1
-          )
-        ],
-        2
-      )
-    ])
+                  staticClass: "menu-dropdown"
+                },
+                [
+                  _c("div", { staticClass: "menu-dropdown__arrow" }),
+                  _vm._v(" "),
+                  _c("li", { staticClass: "menu-dropdown__item" }, [
+                    _c(
+                      "div",
+                      {
+                        staticClass: "tabTask-menu__dropItem",
+                        on: {
+                          click: function($event) {
+                            _vm.handleTask($event, "removeAll", _vm.task.id);
+                          }
+                        }
+                      },
+                      [
+                        _c("div", { staticClass: "text-center" }, [
+                          _vm._v("关闭全部")
+                        ])
+                      ]
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("li", { staticClass: "menu-dropdown__item" }, [
+                    _c("div", { staticClass: "tabTask-menu__dropItem" }, [
+                      _c(
+                        "div",
+                        { staticClass: "text-center tabTask-menu__manage" },
+                        [_vm._v("管理默认标签")]
+                      )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _vm.pids && _vm.pids.length > 0
+                    ? _c("li", { staticClass: "menu-dropdown__item-line" })
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm._l(_vm.pids, function(id) {
+                    return _c(
+                      "li",
+                      { key: id, staticClass: "menu-dropdown__item" },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass: "tabTask-menu__dropItem clearfix",
+                            on: {
+                              click: function($event) {
+                                _vm.handleTask($event, "click", id);
+                              }
+                            }
+                          },
+                          [
+                            _c("div", { staticClass: "tabTask-menu__title" }, [
+                              _vm._v(_vm._s(_vm.process[id].title))
+                            ]),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "tabTask-menu__util" }, [
+                              _vm.process[id].closable !== false
+                                ? _c("i", {
+                                    staticClass: "dmw-icon icon-close f12",
+                                    on: {
+                                      click: function($event) {
+                                        _vm.handleTask($event, "remove", id);
+                                      }
+                                    }
+                                  })
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm.process[id].refreshable !== false
+                                ? _c("i", {
+                                    staticClass: "dmw-icon icon-refresh f12",
+                                    on: {
+                                      click: function($event) {
+                                        _vm.handleTask($event, "refresh", id);
+                                      }
+                                    }
+                                  })
+                                : _vm._e()
+                            ])
+                          ]
+                        )
+                      ]
+                    )
+                  })
+                ],
+                2
+              )
+            ])
+          ],
+          1
+        )
+      ],
+      2
+    )
   ])
 };
 var __vue_staticRenderFns__ = [];
@@ -750,7 +761,7 @@ __vue_render__._withStripped = true;
     var component = (typeof script$$1 === 'function' ? script$$1.options : script$$1) || {};
 
     {
-      component.__file = "/Users/sicmouse/Documents/GitHub/ddv-multi-window/src/components/task.vue";
+      component.__file = "/Users/sicmouse/Documents/GitHub/ddv-multi-window/src/components/taskComponents/horizontal-task.vue";
     }
 
     if (!component.render) {
@@ -828,7 +839,7 @@ __vue_render__._withStripped = true;
   
 
   
-  var TaskComponent = __vue_normalize__(
+  var HorizontalTask = __vue_normalize__(
     { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
     __vue_inject_styles__,
     __vue_script__,
@@ -838,6 +849,203 @@ __vue_render__._withStripped = true;
     __vue_create_injector__,
     undefined
   )
+
+//
+//
+
+var script$1 = {
+  name: 'vertical-task',
+  props: {
+    task: {
+      type: Object
+    },
+    process: {
+      type: Object,
+      default: {}
+    },
+    handleTask: {
+      type: Function
+    },
+    taskOptions: {
+      type: Object
+    }
+  },
+  computed: {
+    taskId: function taskId () {
+      return this.task ? this.task.id : null
+    },
+    activeId: function activeId () {
+      return this.task ? this.task.activeId : null
+    },
+    pids: function pids () {
+      return this.task ? this.task.pids : []
+    },
+    dragData: function dragData () {
+      return this.$ddvMultiWindow.dragData || {}
+    },
+    taskMenuStyle: function taskMenuStyle () {
+      var this$1 = this;
+
+      var style = {};
+
+      if (this.taskOptions.menuStyle && typeof this.taskOptions.menuStyle === 'object') {
+        var keys = Object.keys(this.taskOptions.menuStyle);
+        keys.forEach(function (key) {
+          if (this$1.taskOptions.menuStyle[keys] || this$1.taskOptions.menuStyle[keys] === 0) {
+            style[key] = this$1.taskOptions.menuStyle[keys];
+          }
+        });
+      }
+      return style
+    }
+  },
+  data: function data () {
+    return {
+      tabTaskLiLists: {},
+      isLeave: false,
+      isShowDropdown: false
+    }
+  },
+  mounted: function mounted () {
+    console.warn('not supported vertical mode yet');
+  }
+}
+
+/* script */
+            var __vue_script__$1 = script$1;
+            
+/* template */
+var __vue_render__$1 = function() {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div")
+};
+var __vue_staticRenderFns__$1 = [];
+__vue_render__$1._withStripped = true;
+
+  /* style */
+  var __vue_inject_styles__$1 = undefined;
+  /* scoped */
+  var __vue_scope_id__$1 = undefined;
+  /* module identifier */
+  var __vue_module_identifier__$1 = undefined;
+  /* functional template */
+  var __vue_is_functional_template__$1 = false;
+  /* component normalizer */
+  function __vue_normalize__$1(
+    template, style, script,
+    scope, functional, moduleIdentifier,
+    createInjector, createInjectorSSR
+  ) {
+    var component = (typeof script === 'function' ? script.options : script) || {};
+
+    {
+      component.__file = "/Users/sicmouse/Documents/GitHub/ddv-multi-window/src/components/taskComponents/vertical-task.vue";
+    }
+
+    if (!component.render) {
+      component.render = template.render;
+      component.staticRenderFns = template.staticRenderFns;
+      component._compiled = true;
+
+      if (functional) { component.functional = true; }
+    }
+
+    component._scopeId = scope;
+
+    
+
+    return component
+  }
+  /* style inject */
+  function __vue_create_injector__$1() {
+    var head = document.head || document.getElementsByTagName('head')[0];
+    var styles = __vue_create_injector__$1.styles || (__vue_create_injector__$1.styles = {});
+    var isOldIE =
+      typeof navigator !== 'undefined' &&
+      /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
+
+    return function addStyle(id, css) {
+      if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) { return } // SSR styles are present.
+
+      var group = isOldIE ? css.media || 'default' : id;
+      var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
+
+      if (!style.ids.includes(id)) {
+        var code = css.source;
+        var index = style.ids.length;
+
+        style.ids.push(id);
+
+        if (isOldIE) {
+          style.element = style.element || document.querySelector('style[data-group=' + group + ']');
+        }
+
+        if (!style.element) {
+          var el = style.element = document.createElement('style');
+          el.type = 'text/css';
+
+          if (css.media) { el.setAttribute('media', css.media); }
+          if (isOldIE) {
+            el.setAttribute('data-group', group);
+            el.setAttribute('data-next-index', '0');
+          }
+
+          head.appendChild(el);
+        }
+
+        if (isOldIE) {
+          index = parseInt(style.element.getAttribute('data-next-index'));
+          style.element.setAttribute('data-next-index', index + 1);
+        }
+
+        if (style.element.styleSheet) {
+          style.parts.push(code);
+          style.element.styleSheet.cssText = style.parts
+            .filter(Boolean)
+            .join('\n');
+        } else {
+          var textNode = document.createTextNode(code);
+          var nodes = style.element.childNodes;
+          if (nodes[index]) { style.element.removeChild(nodes[index]); }
+          if (nodes.length) { style.element.insertBefore(textNode, nodes[index]); }
+          else { style.element.appendChild(textNode); }
+        }
+      }
+    }
+  }
+  /* style inject SSR */
+  
+
+  
+  var VerticalTask = __vue_normalize__$1(
+    { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 },
+    __vue_inject_styles__$1,
+    __vue_script__$1,
+    __vue_scope_id__$1,
+    __vue_is_functional_template__$1,
+    __vue_module_identifier__$1,
+    __vue_create_injector__$1,
+    undefined
+  )
+
+var TaskComponent = {
+  name: 'ddv-multi-window-task-template',
+  functional: true,
+  render: function render (h, ref) {
+    var props = ref.props;
+
+    if (props.taskOptions.mode === 'vertical') {
+      return h(VerticalTask, {
+        props: props
+      })
+    }
+    return h(HorizontalTask, {
+      props: props
+    })
+  }
+}
 
 var LoadComponent = {
   name: 'ddv-multi-window-load',
@@ -1017,7 +1225,8 @@ function taskChildrenRender (h, task) {
   var props = {
     task: task,
     process: this.process,
-    handleTask: this.handleTask
+    handleTask: this.handleTask,
+    taskOptions: this.taskOptions
   };
   var children = [];
   if (this.$scopedSlots && this.$scopedSlots.task) {
@@ -1586,10 +1795,16 @@ var apiProps = {
       type: String,
       default: '/'
     },
+    taskOptions: {
+      type: Object,
+      default: function default$2 () {
+        return {}
+      }
+    },
     // process的默认配置项[options]
     renderOptions: {
       type: Object,
-      default: function default$2 () {
+      default: function default$3 () {
         return {
           // 根
           root: {},
@@ -2958,14 +3173,14 @@ function getByParent (parent, key) {
 }
 
 var dp = DdvMultiWindowGlobal.prototype = Object.create(null);
-var hp = Object.hasOwnProperty;
 var ps = Object.create(null);
 var global = new DdvMultiWindowGlobal();
+var hp = Object.hasOwnProperty;
 
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.8',
+  version: '0.1.9',
   Ready: Ready,
   install: vueInstall,
   installed: false,
@@ -3130,7 +3345,7 @@ function RegisterInstanceInstall (Vue) {
 function VuePrototypeInstall (Vue) {
   var this$1 = this;
 
-  hp(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
+  hp.call(Vue.prototype, '$ddvMultiWindow') || Object.defineProperty(Vue.prototype, '$ddvMultiWindow', {
     get: function get () {
       if (!this._ddvMultiWindow) {
         this._ddvMultiWindow = getByParent(this, '_ddvMultiWindow');
@@ -3142,7 +3357,8 @@ function VuePrototypeInstall (Vue) {
       }
     }
   });
-  hp(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
+
+  hp.call(Vue.prototype, '$ddvMultiWindowGlobal') || Object.defineProperty(Vue.prototype, '$ddvMultiWindowGlobal', {
     get: function () { return this$1; }
   });
 }
@@ -3368,16 +3584,10 @@ Object.keys(ps$1).forEach(function (method) {
   if (item === pd) {
     Object.defineProperty(dp$1, method, {
       get: function get () {
-        if (!this.daemonApp) {
-          debugger
-        }
         assert(this.daemonApp, '多窗口没有初始化');
         return this.daemonApp[method]
       },
       set: function set (value) {
-        if (!this.daemonApp) {
-          debugger
-        }
         assert(this.daemonApp, '多窗口没有初始化');
         return (this.daemonApp[method] = value)
       }
