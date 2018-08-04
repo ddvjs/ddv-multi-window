@@ -146,9 +146,12 @@ Object.keys(ps).forEach(key => {
   }
 })
 
-export { DdvMultiWindow, DdvMultiWindow as default }
-function DdvMultiWindow (app, taskId) {
-  this.constructor.apply(this, arguments)
+function DdvMultiWindow () {
+  if (this instanceof DdvMultiWindow) {
+    return this.constructor.apply(this, arguments)
+  } else {
+    throw Error('Must `new DdvMultiWindow()`')
+  }
 }
 
 function constructor (daemonApp, taskId, selfApp) {
@@ -166,3 +169,5 @@ function constructor (daemonApp, taskId, selfApp) {
   this._selfApp = selfApp || this._daemonApp
   this._taskId = taskId
 }
+
+export { DdvMultiWindow, DdvMultiWindow as default }
