@@ -22,7 +22,7 @@ Object.assign(global, {
   isDaemon: true,
   version: '__VERSION__',
   Ready,
-  install,
+  install: vueInstall,
   installed: false,
   daemonInit,
   masterInit
@@ -106,7 +106,7 @@ function get (daemonId, taskId, tryNumMax, tryNum) {
     return item.api[taskId]
   }
 }
-function install (Vue, options) {
+function vueInstall (Vue, options) {
   if ((this.installing || this.installed) && this.$Vue === Vue) return
   // 防止多次重复安装
   this.installing = true
@@ -321,5 +321,11 @@ Object.keys(prototypes).forEach(key => {
   }
 })
 
+const install = global.install
 export let DdvMultiWindow
-export { global, global as default, setDdvMultiWindow }
+export {
+  global,
+  install,
+  setDdvMultiWindow,
+  global as default
+}
