@@ -6,6 +6,10 @@ export default {
     daemonId: {
       type: [Number, String],
       default: 'daemon'
+    },
+    autoColse: {
+      type: Boolean,
+      default: true
     }
   },
   render (h, { data, children, props }) {

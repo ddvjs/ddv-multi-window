@@ -29,10 +29,6 @@ export class DdvMultiWindowGlobal {
     if (!app) {
       throw getError('必须传入app实例')
     }
-    const ddvMultiWindow = getByParent(app, '_ddvMultiWindow')
-    if (ddvMultiWindow) {
-      return Promise.resolve(ddvMultiWindow)
-    }
     const daemonId = app.daemonId
 
     return this.get(daemonId)
@@ -44,6 +40,13 @@ export class DdvMultiWindowGlobal {
         } catch (e) {}
         app._ddvMultiWindow = ddvMultiWindow
         return ddvMultiWindow
+      }, e => {
+        let ddvMultiWindow
+        if (e.name === 'DAEMONID_NOT_EXIST' && (ddvMultiWindow = getByParent(app, '_ddvMultiWindow'))) {
+          return ddvMultiWindow
+        } else {
+          return Promise.reject(e)
+        }
       })
   }
   daemonInit (app) {
