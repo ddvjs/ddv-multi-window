@@ -1,6 +1,4 @@
-<template>
-<div>sdadsdas</div>
-</template>
+<template></template>
 
 <script>
 export default {
@@ -53,6 +51,9 @@ export default {
       isLeave: false,
       isShowDropdown: false
     }
+  },
+  mounted () {
+    console.warn('not supported vertical mode yet')
   }
 }
 </script>

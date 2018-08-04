@@ -846,8 +846,6 @@ __vue_render__._withStripped = true;
 
 //
 //
-//
-//
 
 var script$1 = {
   name: 'vertical-task',
@@ -901,6 +899,9 @@ var script$1 = {
       isLeave: false,
       isShowDropdown: false
     }
+  },
+  mounted: function mounted () {
+    console.warn('not supported vertical mode yet');
   }
 }
 
@@ -912,7 +913,7 @@ var __vue_render__$1 = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("div", [_vm._v("sdadsdas")])
+  return _c("div")
 };
 var __vue_staticRenderFns__$1 = [];
 __vue_render__$1._withStripped = true;
