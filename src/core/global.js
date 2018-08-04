@@ -1,5 +1,5 @@
 import Ready from './ready'
-import Task from '../components/task.vue'
+import Task from '../components/task'
 import Daemon from '../components/daemon'
 import Button from '../components/button'
 import Master from '../components/master'

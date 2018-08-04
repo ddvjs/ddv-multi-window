@@ -19,6 +19,12 @@ export default {
       type: String,
       default: '/'
     },
+    taskOptions: {
+      type: Object,
+      default () {
+        return {}
+      }
+    },
     // process的默认配置项[options]
     renderOptions: {
       type: Object,

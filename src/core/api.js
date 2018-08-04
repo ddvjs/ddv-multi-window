@@ -128,16 +128,10 @@ Object.keys(ps).forEach(method => {
   if (item === pd) {
     Object.defineProperty(dp, method, {
       get () {
-        if (!this.daemonApp) {
-          debugger
-        }
         assert(this.daemonApp, '多窗口没有初始化')
         return this.daemonApp[method]
       },
       set (value) {
-        if (!this.daemonApp) {
-          debugger
-        }
         assert(this.daemonApp, '多窗口没有初始化')
         return (this.daemonApp[method] = value)
       }
