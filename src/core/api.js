@@ -3,12 +3,12 @@ import { inBrowser } from '../util/dom'
 import { isDef } from '../util/is-def'
 import isFunction from '../util/is-function'
 import global, { setDdvMultiWindow } from './global'
+import isProduction from '../util/is-production'
 
 const dp = DdvMultiWindow.prototype = Object.create(null)
 const hp = Object.hasOwnProperty
 const ps = Object.create(null)
 const pd = 'proxyDaemonApp'
-const isp = process.env.NODE_ENV !== 'production'
 
 setDdvMultiWindow(DdvMultiWindow)
 // 方法
@@ -59,10 +59,10 @@ Object.assign(ps, {
   // 还原
   closeMasterWindow: pd,
   masterMoveParentByTaskId: pd,
+  // 所有系统进程
+  systemProcess,
   // 进程
-  process () {
-    return this._process ? this._process : null
-  },
+  process,
   // 进程id
   id,
   // 父层
@@ -88,6 +88,12 @@ function refresh (id) {
 }
 function id () {
   return this.process ? this.process.id : null
+}
+function process () {
+  return this._process ? this._process : null
+}
+function systemProcess () {
+  return this.daemonApp.process
 }
 function parent () {
   return this.process && this.process.parentDdvMultiWindow ? this.process.parentDdvMultiWindow : null
@@ -159,15 +165,14 @@ function DdvMultiWindow () {
 }
 
 function constructor (daemonApp, taskId, process) {
-  console.log('44-constructor', daemonApp, taskId, process)
   // 非产品模式需要判断是否已经调用Vue.use(DdvMultiWindow)安装
   assert(
-    isp || global.installed,
+    isProduction || global.installed,
     `not installed. Make sure to call \`Vue.use(DdvMultiWindow)\` ` +
     `before creating root instance.`
   )
   assert(
-    isp || inBrowser,
+    isProduction || inBrowser,
     `必须有一个window`
   )
   this._daemonApp = daemonApp

@@ -7,7 +7,8 @@ export {
   getOptions
 }
 export default getOptions()
-function getOptions(name, view) {
+
+function getOptions (name, view) {
   return {
     name: name || 'ddv-multi-window-master',
     props: {
@@ -66,7 +67,6 @@ function getOptions(name, view) {
         // master进程的id
         this.$ddvMultiWindowGlobal.masterInit(this)
           .then(() => {
-            console.log(996,this.$ddvMultiWindow)
             this.$ddvMultiWindow.onDaemonClose = this.onDaemonClose.bind(this)
             // 标记初始化完毕
             this.ddvMultiWindowReady = true

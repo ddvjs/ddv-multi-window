@@ -1,6 +1,5 @@
 import { throwError } from '../../util/get-error'
 import DdvMultiWindow from '../api'
-console.log(DdvMultiWindow)
 export default {
   methods: {
     loadComponent (pid) {
