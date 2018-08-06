@@ -1,6 +1,6 @@
 <template>
   <ul
-    class="tabTask-menu tabTask vertical-task clearfix"
+    class="tabTask vertical-task clearfix"
     ref="tabTaskWrap"
     :style="taskMenuStyle"
     @dragover.stop="handleTabWrapDragOver($event, null)"
@@ -181,7 +181,7 @@ export default {
       this.activeEvent = null
       this.dragData.id = null
       this.reduction()
-      this.dragData.$dom.removeAttr('dmwDrag').show()
+      this.dragData.$dom.removeAttr('dmwDrag').fadeIn()
 
       if (this.dragData.taskId === this.taskId && !(event.pageX >= this.dragData.barStartX && event.pageX <= this.dragData.barEndX - 2)) {
         return this.$ddvMultiWindow.tryRun(() =>
@@ -303,7 +303,7 @@ export default {
         this.pids.splice(realIndex, 0, currentItem)
 
         this.reduction()
-        this.dragData.$dom.removeAttr('dmwDrag').show()
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn()
         this.$ddvMultiWindow.tabMoveMasterWindow({
           taskId: this.taskId,
           id: this.dragData.id
@@ -312,7 +312,7 @@ export default {
         this.handleTask(event, 'click', this.dragData.id)
       } else {
         this.reduction()
-        this.dragData.$dom.removeAttr('dmwDrag').show()
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn()
       }
     },
     pidsChange () {

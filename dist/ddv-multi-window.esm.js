@@ -988,7 +988,7 @@ var script$1 = {
       this.activeEvent = null;
       this.dragData.id = null;
       this.reduction();
-      this.dragData.$dom.removeAttr('dmwDrag').show();
+      this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
 
       if (this.dragData.taskId === this.taskId && !(event.pageX >= this.dragData.barStartX && event.pageX <= this.dragData.barEndX - 2)) {
         return this.$ddvMultiWindow.tryRun(function () { return this$1.$ddvMultiWindow.openMasterWindow(pid)
@@ -1113,7 +1113,7 @@ var script$1 = {
         this.pids.splice(realIndex, 0, currentItem);
 
         this.reduction();
-        this.dragData.$dom.removeAttr('dmwDrag').show();
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
         this.$ddvMultiWindow.tabMoveMasterWindow({
           taskId: this.taskId,
           id: this.dragData.id
@@ -1122,7 +1122,7 @@ var script$1 = {
         this.handleTask(event, 'click', this.dragData.id);
       } else {
         this.reduction();
-        this.dragData.$dom.removeAttr('dmwDrag').show();
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
       }
     },
     pidsChange: function pidsChange () {
@@ -1168,7 +1168,7 @@ var __vue_render__$1 = function() {
     "ul",
     {
       ref: "tabTaskWrap",
-      staticClass: "tabTask-menu tabTask vertical-task clearfix",
+      staticClass: "tabTask vertical-task clearfix",
       style: _vm.taskMenuStyle,
       on: {
         dragover: function($event) {
