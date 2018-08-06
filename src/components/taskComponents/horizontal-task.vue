@@ -18,7 +18,7 @@
         :key="id"
         :processid="id"
         v-if="id && process[id]"
-        v-for="id in this.pids"
+        v-for="id in pids"
         draggable="true"
         @click="handleTask($event, 'click', id)"
         @contextmenu="handleTask($event, 'contextMenu', id)"
