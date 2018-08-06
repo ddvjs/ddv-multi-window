@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.9
+  * ddv-multi-window v0.1.10
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -515,7 +515,7 @@ var __vue_render__ = function() {
         }
       },
       [
-        _vm._l(this.pids, function(id) {
+        _vm._l(_vm.pids, function(id) {
           return id && _vm.process[id]
             ? _c(
                 "li",
@@ -851,10 +851,9 @@ __vue_render__._withStripped = true;
   )
 
 //
-//
 
 var script$1 = {
-  name: 'vertical-task',
+  name: 'horizontal-task',
   props: {
     task: {
       type: Object
@@ -906,9 +905,261 @@ var script$1 = {
       isShowDropdown: false
     }
   },
-  mounted: function mounted () {
-    console.warn('not supported vertical mode yet');
-  }
+  methods: {
+    setInfo: function setInfo (event) {
+      var this$1 = this;
+
+      var $tabTaskWrap = refToJquery(this.$refs.tabTaskWrap);
+      var len = this.pids.length;
+
+      this.dragData.event = event;
+      this.dragData.interval = [];
+
+      if (this.dragData.$dom && this.dragData.$dom.length) {
+        this.dragData.activeHeight = this.dragData.$dom.innerHeight() || this.dragData.activeHeight || 0;
+      } else {
+        this.dragData.activeHeight = this.dragData.activeHeight || 0;
+      }
+      this.dragData.marginTop = 0;
+      this.dragData.$dom.attr('dmwDrag', '1');
+      var placeholder = 0;
+
+      for (var i = 0; i < len; i++) {
+        var $li = refToJquery('[processid="' + this$1.pids[i] + '"]', this$1.$refs.tabTask);
+        var marginTop = Number($li.css('margin-top').split('px')[0]);
+        var marginBottom = Number($li.css('margin-bottom').split('px')[0]);
+        var offset = $li.offset();
+        var isHide = $li.is('[dmwDrag="1"]');
+        var obj = {};
+        this$1.dragData.marginTop += marginTop;
+        // 实际显示位置
+        if (isHide) {
+          placeholder = $li.innerHeight() + marginTop - marginBottom;
+        } else {
+          obj.startY = offset.top + marginTop - placeholder;
+          obj.endY = offset.top + $li.innerHeight() + marginTop - marginBottom - placeholder;
+          obj.pid = this$1.pids[i];
+          this$1.dragData.interval.push(obj);
+        }
+      }
+      // 上边距的平均值
+      this.dragData.marginTop = Math.round(this.dragData.marginTop / len);
+      // bar
+      this.dragData.barStartX = $tabTaskWrap.offset().left;
+      this.dragData.barEndX = this.dragData.barStartX + $tabTaskWrap.outerWidth();
+    },
+    reduction: function reduction () {
+      refToJquery('[active="active"]', this.$refs.tabTask)
+        .css('margin-top', ((this.dragData.marginTop) + "px"))
+        .removeAttr('active');
+    },
+    // tab标签 - 开始拖动源对象
+    handleTabDragStart: function handleTabDragStart (event, pid) {
+      var process = this.process[pid];
+      var $tabTask = refToJquery(this.$refs.tabTask);
+      this.dragData.$dom = $tabTask.closest(event.target);
+      refToJquery(this.$refs.tabTask)
+        .addClass('transition');
+      this.setInfo(event);
+      this.dragData.id = pid;
+      this.dragData.ing = true;
+      this.dragData.taskId = this.taskId;
+      // 原始taskId
+      this.dragData.rootTaskId = this.taskId;
+      // 是否有跨窗口
+      this.dragData.isCross = false;
+
+      event.ddvCmsTaskWindowId = pid;
+      // 保存数据--该img元素的id
+      event.dataTransfer.dropEffect = 'move';
+      event.dataTransfer.effectAllowed = 'linkMove';
+      event.dataTransfer.setData('ddvCmsDrag', JSON.stringify({
+        'type': 'tabTask',
+        'data': {
+          windowId: pid
+        }
+      }));
+      event.dataTransfer.setData('text/plain', process.href || process.src);
+    },
+    // tab标签 - 拖动结束
+    handleTabDragEnd: function handleTabDragEnd (event, pid) {
+      var this$1 = this;
+
+      if (this.dragData.ing !== true) {
+        return
+      }
+      this.dragData.ing = false;
+      refToJquery(this.$refs.tabTask)
+        .removeClass('transition');
+      this.activeEvent = null;
+      this.dragData.id = null;
+      this.reduction();
+      this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
+
+      if (this.dragData.taskId === this.taskId && !(event.pageX >= this.dragData.barStartX && event.pageX <= this.dragData.barEndX - 2)) {
+        return this.$ddvMultiWindow.tryRun(function () { return this$1.$ddvMultiWindow.openMasterWindow(pid)
+            .catch(function (e) {
+              if (e.name === 'OPEN_WINDOW_FAIL') {
+                return this$1.$confirm('你是否要在新窗口打开', '提示', {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  type: 'warning'
+                })
+                  .then(function () { return this$1.$ddvMultiWindow.openMasterWindow(pid); }, function (e) {})
+              } else {
+                return Promise.reject(e)
+              }
+            }); }
+        )
+      }
+    },
+    // tab标签 - 在目标区域拖拽
+    handleTabWrapDragOver: function handleTabWrapDragOver (event, dropId) {
+      var this$1 = this;
+
+      if (this.dragData.ing !== true) {
+        return
+      }
+      // 注意禁止浏览器默认事件
+      event.preventDefault();
+      var $tabTask = refToJquery(this.$refs.tabTask);
+      // const $menuArrow = ref$(this.$refs.menuArrow)
+      // 跨窗口
+      if (this.taskId !== this.dragData.taskId) {
+        refToJquery(this.$refs.tabTask)
+          .addClass('transition');
+        // 重新设置窗口数据
+        this.setInfo(this.dragData.event);
+        this.dragData.isCross = this.dragData.rootTaskId !== this.taskId;
+      }
+      // 储存当前拖动的任务id
+      this.dragData.taskId = this.taskId;
+      // 在盒子区间内，因为超出无话获取，所以减去两个像素
+      if (event.pageX >= this.dragData.barStartX && event.pageX <= this.dragData.barEndX - 2) {
+        var isIn = false;
+        this.dragData.$dom.hide();
+
+        for (var i = 0; i < this.dragData.interval.length; i++) {
+          var item = this$1.dragData.interval[i];
+          if (event.pageY > item.startY && event.pageY < item.endY) {
+            isIn = true;
+            $tabTask.closest('[active="active"]')
+              .css('margin-top', ((this$1.dragData.marginTop) + "px"))
+              .removeAttr('active');
+
+            refToJquery('[processid="' + item.pid + '"]', this$1.$refs.tabTask)
+              .attr('active', 'active')
+              .css('margin-top', this$1.dragData.activeHeight + 'px');
+            this$1.dragData.replaceId = item.pid;
+            this$1.dragData.isLast = false;
+          }
+        }
+
+        if (!isIn) {
+          if ($tabTask.closest('[active="active"]').length) {
+            $tabTask.closest('[active="active"]')
+              .css('margin-top', ((this.dragData.marginTop) + "px"))
+              .removeAttr('active');
+          }
+
+          this.dragData.isLast = true;
+        }
+      }
+    },
+    // tab盒子 - 离开目标区域
+    handleTabWrapDragLeave: function handleTabWrapDragLeave (event) {
+      if (this.dragData.ing !== true) {
+        return
+      }
+      // 超出盒子范围内
+      if (!(event.pageX >= this.dragData.barStartX && event.pageX <= this.dragData.barEndX - 2)) {
+        this.reduction();
+      }
+    },
+    // tab盒子 - 拖落在tab盒子区域
+    handleTabWrapDrop: function handleTabWrapDrop (event, dropId) {
+      var this$1 = this;
+
+      if (this.dragData.ing !== true) {
+        return
+      }
+      refToJquery(this.$refs.tabTask)
+        .removeClass('transition');
+      event.preventDefault();
+      // 获取数组中目标位置
+      var aimsIndex = this.pids.indexOf(this.dragData.replaceId);
+      // 获取当前位置
+      var currentIndex = this.pids.indexOf(this.dragData.id);
+      var realIndex = 0;
+      // 有移动
+      if (aimsIndex !== currentIndex || this.pids.length === 0) {
+        // 获取实际显示数据
+        if (this.dragData.isLast) {
+          // 最后一个
+          realIndex = this.pids.length - 1 <= -1 ? 0 : this.pids.length - 1;
+        } else {
+          var pidsLists = [];
+          this.pids.forEach(function (pid) {
+            if (pid !== this$1.dragData.id) {
+              pidsLists.push(pid);
+            }
+          });
+          // 实际替换位置
+          realIndex = pidsLists.indexOf(this.dragData.replaceId);
+        }
+
+        var currentItem = '';
+        // 是否跨窗口
+        if (this.dragData.isCross) {
+          removeArray(this.process[this.dragData.rootTaskId].pids, function (pid) { return pid === this$1.dragData.id; });
+          currentItem = this.dragData.id;
+        } else {
+          currentItem = this.pids.splice(currentIndex, 1)[0];
+        }
+        this.pids.splice(realIndex, 0, currentItem);
+
+        this.reduction();
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
+        this.$ddvMultiWindow.tabMoveMasterWindow({
+          taskId: this.taskId,
+          id: this.dragData.id
+        });
+        // 切换标签
+        this.handleTask(event, 'click', this.dragData.id);
+      } else {
+        this.reduction();
+        this.dragData.$dom.removeAttr('dmwDrag').fadeIn();
+      }
+    },
+    pidsChange: function pidsChange () {
+      var this$1 = this;
+
+      this.$nextTick(function () { return this$1.tabTaskLiInit(); });
+    },
+    tabTaskLiInit: function tabTaskLiInit () {
+      var this$1 = this;
+
+      this.pids && Array.isArray(this.pids) && this.pids.forEach(function (pid) {
+        var $dom = refToJquery('[processid="' + pid + '"]', this$1.$refs.tabTask);
+        var dom = $dom[0];
+        this$1.tabTaskLiLists[pid] = {
+          dom: dom,
+          $: $dom,
+          top: $dom.offset().top,
+          left: $dom.offset().left,
+          outerWidth: $dom.outerWidth(),
+          outerHeight: $dom.outerHeight()
+        };
+      });
+    }
+  },
+  watch: {
+    pids: {
+      deep: true,
+      handler: 'pidsChange'
+    }
+  },
+  destroyed: function destroyed () {}
 }
 
 /* script */
@@ -919,7 +1170,120 @@ var __vue_render__$1 = function() {
   var _vm = this;
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
-  return _c("div")
+  return _c(
+    "ul",
+    {
+      ref: "tabTaskWrap",
+      staticClass: "tabTask vertical-task clearfix",
+      style: _vm.taskMenuStyle,
+      on: {
+        dragover: function($event) {
+          $event.stopPropagation();
+          _vm.handleTabWrapDragOver($event, null);
+        },
+        dragleave: function($event) {
+          $event.stopPropagation();
+          _vm.handleTabWrapDragLeave($event);
+        },
+        drop: function($event) {
+          $event.stopPropagation();
+          _vm.handleTabWrapDrop($event, null);
+        }
+      }
+    },
+    _vm._l(_vm.pids, function(id) {
+      return id && _vm.process[id]
+        ? _c(
+            "li",
+            {
+              key: id,
+              ref: "tabTask",
+              refInFor: true,
+              staticClass: "vertical-task-menu__li",
+              class: {
+                "vertical-task-menu__atcive": id === _vm.activeId
+              },
+              attrs: { processid: id, draggable: "true" },
+              on: {
+                click: function($event) {
+                  _vm.handleTask($event, "click", id);
+                },
+                contextmenu: function($event) {
+                  _vm.handleTask($event, "contextMenu", id);
+                },
+                drop: function($event) {
+                  $event.stopPropagation();
+                  _vm.handleTabWrapDrop($event, id);
+                },
+                dragstart: function($event) {
+                  $event.stopPropagation();
+                  _vm.handleTabDragStart($event, id);
+                },
+                dragover: function($event) {
+                  $event.stopPropagation();
+                  _vm.handleTabWrapDragOver($event, id);
+                },
+                dragend: function($event) {
+                  $event.stopPropagation();
+                  _vm.handleTabDragEnd($event, id);
+                }
+              }
+            },
+            [
+              _c("div", { staticClass: "tabTask-menu__item" }, [
+                _vm._v("\n      " + _vm._s(_vm.process[id].title) + "\n    ")
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "tabTask-menu__handle" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass: "inline-block",
+                    on: {
+                      click: function($event) {
+                        $event.stopPropagation();
+                        _vm.handleTask($event, "openMasterWindow", id);
+                      }
+                    }
+                  },
+                  [_c("i", { staticClass: "dmw-icon icon-new-window f14" })]
+                ),
+                _vm._v(" "),
+                _vm.process[id].refreshable !== false
+                  ? _c(
+                      "div",
+                      {
+                        staticClass: "inline-block",
+                        on: {
+                          click: function($event) {
+                            _vm.handleTask($event, "refresh", id);
+                          }
+                        }
+                      },
+                      [_c("i", { staticClass: "dmw-icon icon-refresh f14" })]
+                    )
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.process[id].closable !== false
+                  ? _c(
+                      "div",
+                      {
+                        staticClass: "inline-block",
+                        on: {
+                          click: function($event) {
+                            _vm.handleTask($event, "remove", id);
+                          }
+                        }
+                      },
+                      [_c("i", { staticClass: "dmw-icon icon-close f14" })]
+                    )
+                  : _vm._e()
+              ])
+            ]
+          )
+        : _vm._e()
+    })
+  )
 };
 var __vue_staticRenderFns__$1 = [];
 __vue_render__$1._withStripped = true;
@@ -3180,7 +3544,7 @@ var hp = Object.hasOwnProperty;
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.9',
+  version: '0.1.10',
   Ready: Ready,
   install: vueInstall,
   installed: false,
