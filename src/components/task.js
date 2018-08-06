@@ -1,5 +1,7 @@
 import HorizontalTask from './taskComponents/horizontal-task.vue'
 import VerticalTask from './taskComponents/vertical-task.vue'
+import '../assets/style/task.css'
+import '../assets/style/iconfont.css'
 
 export default {
   name: 'ddv-multi-window-task-template',

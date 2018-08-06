@@ -264,3 +264,26 @@
   top: 0;
   right: 10px
 }
+
+.vertical-task {
+  width: 180px;
+  overflow: hidden;
+}
+
+.vertical-task-menu__li {
+  width: 100%;
+  background: #e0e1e5;
+  border-bottom: 1px solid #e0e1e5;
+  cursor: pointer;
+  line-height: 40px;
+  height: 40px;
+  padding-left: 10px;
+  padding-right: 73px;
+  overflow: hidden;
+  position: relative;
+}
+
+.vertical-task-menu__atcive {
+  background: #fff;
+  border-bottom: 1px solid #fff;
+}
