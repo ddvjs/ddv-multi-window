@@ -39,11 +39,14 @@ export default {
       // 注意禁止浏览器默认事件
       event.preventDefault()
       var closePromises = []
-      this.process[taskId].pids.forEach(
-        pid =>
-          this.process[pid] && this.process[pid].closable !== false &&
+
+      if (Array.isArray(this.process[taskId].pids)) {
+        this.process[taskId].pids.forEach(
+          pid =>
+            this.process[pid] && this.process[pid].closable !== false &&
           closePromises.push(this.$ddvMultiWindow.remove(pid))
-      )
+        )
+      }
       return Promise.all(closePromises)
     },
     // 右键一个tab窗口
