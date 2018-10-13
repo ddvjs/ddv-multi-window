@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.10
+  * ddv-multi-window v0.1.11
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -3542,7 +3542,7 @@ var hp = Object.hasOwnProperty;
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.10',
+  version: '0.1.11',
   Ready: Ready,
   install: vueInstall,
   installed: false,
