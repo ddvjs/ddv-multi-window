@@ -1,5 +1,5 @@
 /*!
-  * ddv-multi-window v0.1.10
+  * ddv-multi-window v0.1.11
   * (c) 2018 yuchonghua@163.com
   * @license MIT
   */
@@ -3023,10 +3023,13 @@ var handleTask = {
       // 注意禁止浏览器默认事件
       event.preventDefault();
       var closePromises = [];
-      this.process[taskId].pids.forEach(
-        function (pid) { return this$1.process[pid] && this$1.process[pid].closable !== false &&
+
+      if (Array.isArray(this.process[taskId].pids)) {
+        this.process[taskId].pids.forEach(
+          function (pid) { return this$1.process[pid] && this$1.process[pid].closable !== false &&
           closePromises.push(this$1.$ddvMultiWindow.remove(pid)); }
-      );
+        );
+      }
       return Promise.all(closePromises)
     },
     // 右键一个tab窗口
@@ -3543,7 +3546,7 @@ var hp = Object.hasOwnProperty;
 Object.assign(global, {
   get: get,
   isDaemon: true,
-  version: '0.1.10',
+  version: '0.1.11',
   Ready: Ready,
   install: vueInstall,
   installed: false,
